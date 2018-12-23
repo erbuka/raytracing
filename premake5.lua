@@ -7,6 +7,7 @@ project "Raytracer"
     kind "StaticLib"
     language "C++"
     targetdir "bin/%{cfg.buildcfg}"
+    
 
     files { "Raytracer/**.h", "Raytracer/**.cpp" }
 
