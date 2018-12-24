@@ -15,6 +15,7 @@
     <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Raytracer</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -40,14 +41,14 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>bin\Debug\</OutDir>
-    <IntDir>obj\Debug\Raytracer\</IntDir>
+    <OutDir>..\bin\Debug\Raytracer\</OutDir>
+    <IntDir>..\bin-int\Debug\Raytracer\</IntDir>
     <TargetName>Raytracer</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>bin\Release\</OutDir>
-    <IntDir>obj\Release\Raytracer\</IntDir>
+    <OutDir>..\bin\Release\Raytracer\</OutDir>
+    <IntDir>..\bin-int\Release\Raytracer\</IntDir>
     <TargetName>Raytracer</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
@@ -82,27 +83,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Raytracer\CheckerBoard.h" />
-    <ClInclude Include="Raytracer\Common.h" />
-    <ClInclude Include="Raytracer\Marble.h" />
-    <ClInclude Include="Raytracer\Material.h" />
-    <ClInclude Include="Raytracer\Noise.h" />
-    <ClInclude Include="Raytracer\Perlin.h" />
-    <ClInclude Include="Raytracer\Raytracer.h" />
-    <ClInclude Include="Raytracer\RealityEngine.h" />
-    <ClInclude Include="Raytracer\Scene.h" />
-    <ClInclude Include="Raytracer\Worley.h" />
+    <ClInclude Include="CheckerBoard.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="Marble.h" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="Noise.h" />
+    <ClInclude Include="Perlin.h" />
+    <ClInclude Include="Raytracer.h" />
+    <ClInclude Include="RealityEngine.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="Worley.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Raytracer\CheckerBoard.cpp" />
-    <ClCompile Include="Raytracer\Common.cpp" />
-    <ClCompile Include="Raytracer\Marble.cpp" />
-    <ClCompile Include="Raytracer\Material.cpp" />
-    <ClCompile Include="Raytracer\Noise.cpp" />
-    <ClCompile Include="Raytracer\Perlin.cpp" />
-    <ClCompile Include="Raytracer\Raytracer.cpp" />
-    <ClCompile Include="Raytracer\Scene.cpp" />
-    <ClCompile Include="Raytracer\Worley.cpp" />
+    <ClCompile Include="CheckerBoard.cpp" />
+    <ClCompile Include="Common.cpp" />
+    <ClCompile Include="Marble.cpp" />
+    <ClCompile Include="Material.cpp" />
+    <ClCompile Include="Noise.cpp" />
+    <ClCompile Include="Perlin.cpp" />
+    <ClCompile Include="Raytracer.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Worley.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
