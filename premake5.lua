@@ -30,6 +30,7 @@ project "Sandbox0"
     location "Sandbox0"
     
     targetdir "bin/%{cfg.buildcfg}/%{prj.name}"
+    debugdir "bin/%{cfg.buildcfg}/%{prj.name}"
     objdir "bin-int/%{cfg.buildcfg}/%{prj.name}"
 
     files { "%{prj.name}/**.h", "%{prj.name}/**.cpp" }
@@ -42,12 +43,12 @@ project "Sandbox0"
 
     links { "Raytracer", "freetype", "opengl32", "winmm", "gdi32" }
 
+    postbuildcommands {
+        "{COPY} res/ ../bin/%{cfg.buildcfg}/%{prj.name}/res"
+    }            
 
     filter "configurations:Debug"
         links { "sfml-system-s-d", "sfml-window-s-d", "sfml-graphics-s-d" }
 
     filter "configurations:Release"
         links { "sfml-system-s", "sfml-window-s", "sfml-graphics-s" }  
-        postbuildcommands {
-            "{COPY} res/ ../bin/%{cfg.buildcfg}/%{prj.name}/res"
-        }        

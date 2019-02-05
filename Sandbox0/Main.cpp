@@ -35,7 +35,7 @@ public:
 	}
 
 	void Start() {
-		m_Window.create(sf::VideoMode(CWidth<int>(), CHeight<int>()), "Test");
+		m_Window.create(sf::VideoMode(CWidth<int>(), CHeight<int>()), "Raytracer");
 
 		m_Raytracer = std::shared_ptr<re::Raytracer>(new re::Raytracer(CWidth<int>(), CHeight<int>()));
 		m_Raycaster = std::shared_ptr<re::DebugRaycaster>(new re::DebugRaycaster(CFastWidth<int>(), CFastHeight<int>()));

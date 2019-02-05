@@ -69,6 +69,9 @@
       <AdditionalDependencies>freetype.lib;opengl32.lib;winmm.lib;gdi32.lib;sfml-system-s-d.lib;sfml-window-s-d.lib;sfml-graphics-s-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\vendor\SFML\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>IF EXIST res\ (xcopy /Q /E /Y /I res ..\bin\Debug\$(ProjectName)\res &gt; nul) ELSE (xcopy /Q /Y /I res ..\bin\Debug\$(ProjectName)\res &gt; nul)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
