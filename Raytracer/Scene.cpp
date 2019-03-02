@@ -3,8 +3,37 @@
 
 re::Color re::SkyBox::GetColor(const Vector3 & direction) const
 {
+	constexpr float thresold = 0.98f;
+	constexpr float border = (1.0f - thresold) / 2.0f;
+	constexpr float thresoldPlusBorder = thresold + border;
+
 	// Get the current sky color
-	return Lerp(m_SkyTop, m_SkyBottom, std::fmaxf(0, 1.0 - (direction ^ Vector3::Up)));
+	auto color = Lerp(m_SkyTop, m_SkyBottom, std::fmaxf(0, 1.0 - (direction ^ Vector3::Up)));
+
+	if (m_Sun != nullptr && m_Sun->Type == LightType::Directional)
+	{
+		float f = std::fmaxf(0, direction ^ m_Sun->Direction);
+
+		if (f < thresold)
+		{
+			return color;
+		}
+		else if (f < thresoldPlusBorder)
+		{
+			f = std::powf((f - thresold) / border, 2.0f);
+			return Mix(color, m_Sun->Color, f);
+		}
+		else
+		{
+			return m_Sun->Color;
+		}
+
+	}
+	else
+	{
+		return color;
+	}
+
 }
 
 re::Scene::Scene()

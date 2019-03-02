@@ -260,20 +260,34 @@ re::Color re::Raytracer::Raycast(Scene * m_Scene, const Ray & ray)
 	return RecursiveRaytrace(m_Scene, ray, 0);
 }
 
-re::Color re::DebugRaycaster::Raycast(Scene * m_Scene, const Ray & ray)
+re::Color re::DebugRaycaster::Raycast(Scene * scene, const Ray & ray)
 {
-	Scene::RaycastResult result = m_Scene->CastRay(ray);
+	Scene::RaycastResult result = scene->CastRay(ray);
 
-	if (result.Hit)
+
+	switch (Mode)
 	{
-		switch (Mode)
+	case Modes::Normal:
+		if (result.Hit)
 		{
-		case Modes::Normal:
 			return Color(
 				(result.Normal.X + 1) / 2,
 				(result.Normal.Y + 1) / 2,
 				1 - (result.Normal.Z + 1) / 2
-				);
+			);
+		}
+		break;
+	case Modes::Color:
+		if (result.Hit)
+		{
+			return result.Node->GetComponentOfType<Shape>()->Material->GetAbsorbedColor(result.LocalPoint);
+		}
+		else
+		{
+			if (scene->Background != nullptr)
+			{
+				return scene->Background->GetColor(ray.Direction);
+			}
 		}
 
 	}

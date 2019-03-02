@@ -65,13 +65,16 @@ namespace re
 	class SkyBox : public Background
 	{
 	public:
-		SkyBox(Color skyTop, Color skyBottom) 
-			: m_SkyTop(skyTop), m_SkyBottom(skyBottom) {}
+		SkyBox(Color skyTop, Color skyBottom, Light* sun = nullptr) 
+			: m_SkyTop(skyTop), m_SkyBottom(skyBottom), m_Sun(sun) {}
 
 		virtual Color GetColor(const Vector3& direction) const override;
 
+		float SunFactor = 128.0f;
+
 	private:
 		Color m_SkyTop, m_SkyBottom;
+		Light* m_Sun;
 	};
 
 	class Scene

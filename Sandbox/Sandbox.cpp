@@ -98,6 +98,8 @@ int sb::Sandbox::Start(unsigned int width, unsigned int height)
 	m_Raytracer = std::shared_ptr<re::Raytracer>(new re::Raytracer(m_Width, m_Height));
 	m_Raycaster = std::shared_ptr<re::DebugRaycaster>(new re::DebugRaycaster(m_Width / 4, m_Height / 4));
 
+	m_Raycaster->Mode = re::DebugRaycaster::Modes::Color;
+
 	auto currTime = std::chrono::high_resolution_clock::now();
 	auto prevTime = std::chrono::high_resolution_clock::now();
 
@@ -392,7 +394,6 @@ void sb::Sandbox::InitMaterials()
 	m_Materials.insert({ "glass_white", std::shared_ptr<re::Material>(new re::UniformMaterial(0xffffff, 0.4f)) });
 	m_Materials.insert({ "mirror", std::shared_ptr<re::Material>(new re::UniformMaterial(0xffffff, 0.0f)) });
 
-
 	m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::CheckerBoard(16.0f)), m_Materials["glass_black"], m_Materials["glass_white"])));
 	m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::Marble(64, 32)), m_Materials["glass_black"], m_Materials["glass_white"])));
 	m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::Worley(64, 32)), m_Materials["glass_black"], m_Materials["glass_white"])));
@@ -436,14 +437,16 @@ void sb::Sandbox::InitScene()
 
 
 	{
-		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x009CE5FF, 0x00C3FAFF)));
-		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x0005061c, 0x000c0f47)));
 
 		m_AmbientLights.push_back(std::shared_ptr<re::Light>(makeAmbientLight(0x222222)));
 		m_AmbientLights.push_back(std::shared_ptr<re::Light>(makeAmbientLight(0)));
 
-		m_DirectionalLights.push_back(std::shared_ptr<re::Light>(makeDirectionalLight(0x00fff4d6, { 1, 1, -1 })));
+		//m_DirectionalLights.push_back(std::shared_ptr<re::Light>(makeDirectionalLight(0x00fff4d6, { 1, 1, -1 })));
+		m_DirectionalLights.push_back(std::shared_ptr<re::Light>(makeDirectionalLight(0x00ffddee, { 1, 1, -1 })));
 		m_DirectionalLights.push_back(std::shared_ptr<re::Light>(makeDirectionalLight(0x00353532, { 1, 1, -1 })));
+
+		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x009CE5FF, 0x00C3FAFF, m_DirectionalLights[0].get())));
+		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x0005061c, 0x000c0f47, m_DirectionalLights[1].get())));
 
 	}
 

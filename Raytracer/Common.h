@@ -168,6 +168,8 @@ namespace re
 	Color operator*(const Color& lhs, const Color& rhs);
 	Color operator*(const Color& color, real k);
 
+	Color Mix(const Color& a, const Color& b, real t);
+
 	struct Ray
 	{
 		Vector3 Origin = Vector3::Zero, Direction = Vector3::Forward;

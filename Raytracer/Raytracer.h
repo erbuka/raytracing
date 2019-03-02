@@ -61,7 +61,7 @@ namespace re
 	{
 	public:
 
-		enum class Modes { Normal };
+		enum class Modes { Normal, Color };
 
 		Modes Mode = Modes::Normal;
 

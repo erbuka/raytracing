@@ -235,6 +235,12 @@ re::Color re::operator*(const Color & lhs, real k)
 		);
 }
 
+re::Color re::Mix(const Color & a, const Color & b, real t)
+{
+	real _t = 1 - t;
+	return { _t * a.R + t * b.R, _t * a.G + t * b.G, _t * a.B + t * b.B };
+}
+
 re::Vector3 re::operator*(const Vector3 & v, real t)
 {
 	return Vector3(v.X * t, v.Y * t, v.Z * t);
