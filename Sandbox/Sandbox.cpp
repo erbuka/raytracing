@@ -3,12 +3,57 @@
 #include <chrono>
 
 
-static void GLFW_WindowSizeCallback(GLFWwindow* window, int width, int height)
+static inline sb::Sandbox* GetSandbox(GLFWwindow* window)
 {
-	sb::Sandbox* sandbox =  static_cast<sb::Sandbox*>(glfwGetWindowUserPointer(window));
-	sandbox->Resize(width, height);
+	return static_cast<sb::Sandbox*>(glfwGetWindowUserPointer(window));
 }
 
+static void GLFW_WindowSizeCallback(GLFWwindow* window, int width, int height)
+{
+	GetSandbox(window)->Resize(width, height);
+}
+
+
+static void GLFW_KeyCallback(GLFWwindow* window, int keycode, int scancode, int action, int mods)
+{
+	auto sandbox = GetSandbox(window);
+	switch (action)
+	{
+	case GLFW_PRESS:
+	case GLFW_REPEAT:
+		sandbox->KeyPressed(keycode);
+		break;
+	}
+}
+
+static void GLFW_CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
+{
+	auto& io = ImGui::GetIO();
+
+	if (!io.WantCaptureMouse)
+	{
+		GetSandbox(window)->MouseMoved(static_cast<float>(xpos), static_cast<float>(ypos));
+	}
+}
+
+static void GLFW_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{	
+	auto& io = ImGui::GetIO();
+
+	if (!io.WantCaptureMouse)
+	{
+
+		switch (action)
+		{
+		case GLFW_PRESS:
+			GetSandbox(window)->MousePressed(button);
+			break;
+		case GLFW_RELEASE:
+			GetSandbox(window)->MouseReleased(button);
+			break;
+		}
+	}
+}
 
 sb::Sandbox::~Sandbox()
 {
@@ -38,6 +83,13 @@ int sb::Sandbox::Start(unsigned int width, unsigned int height)
 	/* Init GLAD */
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
+
+	/* Map window funcs */
+	glfwSetWindowSizeCallback(m_Window, &GLFW_WindowSizeCallback);
+	glfwSetKeyCallback(m_Window, &GLFW_KeyCallback);
+	glfwSetCursorPosCallback(m_Window, &GLFW_CursorPosCallback);
+	glfwSetMouseButtonCallback(m_Window, &GLFW_MouseButtonCallback);
+
 	InitGL();
 	InitImGUI();
 	InitMaterials();
@@ -49,8 +101,8 @@ int sb::Sandbox::Start(unsigned int width, unsigned int height)
 	auto currTime = std::chrono::high_resolution_clock::now();
 	auto prevTime = std::chrono::high_resolution_clock::now();
 
-	/* Map window funcs */
-	glfwSetWindowSizeCallback(m_Window, &GLFW_WindowSizeCallback);
+	glfwSetWindowUserPointer(m_Window, this);
+
 
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(m_Window))
@@ -79,6 +131,67 @@ void sb::Sandbox::Resize(unsigned int width, unsigned int height)
 	glViewport(0, 0, width, height);
 }
 
+void sb::Sandbox::KeyPressed(int keycode)
+{
+	if (keycode == GLFW_KEY_W || keycode == GLFW_KEY_S || keycode == GLFW_KEY_A || keycode == GLFW_KEY_D)
+	{
+		auto status = m_Raytracer->GetStatus();
+
+		if (!status.Finished)
+		{
+			m_Raytracer->Interrupt();
+		}
+
+		m_SceneDirty = true;
+
+	}
+}
+
+void sb::Sandbox::MouseMoved(float x, float y)
+{
+	if (glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+	{
+		double x, y;
+		int w, h;
+
+		glfwGetCursorPos(m_Window, &x, &y);
+		m_CurrDragPos = { x, y };
+
+		glfwGetWindowSize(m_Window, &w, &h);
+
+		float dx = (m_CurrDragPos.X - m_PrevDragPos.X) / w;
+		float dy = (m_CurrDragPos.Y - m_PrevDragPos.Y) / h;
+
+		m_CameraDir.Alpha += dx * re::PI;
+		m_CameraDir.Beta += dy * re::PI;
+
+		if (dx != 0 || dy != 0)
+		{
+			auto status = m_Raytracer->GetStatus();
+			m_SceneDirty = true;
+			m_Raytracer->Interrupt();
+
+		}
+			
+
+		m_PrevDragPos = m_CurrDragPos;
+	}
+}
+
+void sb::Sandbox::MousePressed(int button)
+{
+	if (button == GLFW_MOUSE_BUTTON_LEFT)
+	{
+		double x, y;
+		glfwGetCursorPos(m_Window, &x, &y);
+		m_CurrDragPos = m_PrevDragPos = { x, y };
+	}
+}
+
+void sb::Sandbox::MouseReleased(int button)
+{
+}
+
 void sb::Sandbox::InitImGUI()
 {
 	IMGUI_CHECKVERSION();
@@ -95,8 +208,9 @@ void sb::Sandbox::InitGL()
 
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
+
 	glGenTextures(1, &m_FastTexture);
-	glBindTexture(GL_TEXTURE_2D, m_Texture);
+	glBindTexture(GL_TEXTURE_2D, m_FastTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -122,9 +236,47 @@ void sb::Sandbox::Update(float dt)
 		return status == GLFW_PRESS || status == GLFW_REPEAT;
 	};
 
-	auto pixels = m_Raycaster->Render(m_Scene.get());
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width / 4, m_Height / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	m_Scene->LookDirection = re::Vector3{
+		std::cos(m_CameraDir.Beta) * std::cos(m_CameraDir.Alpha),
+		std::sin(m_CameraDir.Beta),
+		std::cos(m_CameraDir.Beta) * std::sin(m_CameraDir.Alpha)
+	};
 
+	m_Raytracer->SuperSampling = Settings.Supersampling;
+	m_Raytracer->MaxRecursion = Settings.MaxRecursion;
+
+
+	m_Ground->Material = m_GroundMaterials[Settings.GroundMaterial].get();
+	
+	m_Scene->Lights.clear();
+
+	m_Scene->Lights.push_back(m_AmbientLights[Settings.Sky].get());
+	m_Scene->Lights.push_back(m_DirectionalLights[Settings.Sky].get());
+
+	if (Settings.LampsSwitch)
+	{
+		for (auto &l : m_Lamps)
+		{
+			m_Scene->Lights.push_back(l.get());
+		}
+	}
+
+	m_Scene->Background = m_SkyBoxes[Settings.Sky].get();
+
+	auto status = m_Raytracer->GetStatus();
+
+	if (!m_SceneDirty && status.Finished && !status.Interruped)
+	{
+		glBindTexture(GL_TEXTURE_2D, m_Texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Raytracer->GetViewWidth(), m_Raytracer->GetViewHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, status.Pixels);
+	}
+	else
+	{
+		unsigned int * pixels = m_Raycaster->RenderSync(m_Scene.get());
+		glBindTexture(GL_TEXTURE_2D, m_FastTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Raycaster->GetViewWidth(), m_Raycaster->GetViewHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	}
+	
 	auto right = re::Cross(m_Scene->LookDirection, re::Vector3::Up);
 
 	if (isKeyDown(GLFW_KEY_W))
@@ -150,16 +302,21 @@ void sb::Sandbox::Update(float dt)
 
 void sb::Sandbox::Render(float dt)
 {
-	
+	auto& io = ImGui::GetIO();
+
+
+	auto status = m_Raytracer->GetStatus();
 	/* Scene */
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	glBindTexture(GL_TEXTURE_2D, !m_SceneDirty && status.Finished && !status.Interruped ? m_Texture : m_FastTexture);
+
 	glBegin(GL_QUADS);
 	{
-		glColor3f(1, 1, 1); glTexCoord2f(0, 1); glVertex3f(0, 0, 0);
-		glColor3f(0, 1, 1); glTexCoord2f(1, 1); glVertex3f(1, 0, 0);
-		glColor3f(1, 0, 1); glTexCoord2f(1, 0);	glVertex3f(1, 1, 0);
-		glColor3f(1, 1, 0); glTexCoord2f(0, 0);	glVertex3f(0, 1, 0);
+		glTexCoord2f(0, 1); glVertex3f(0, 0, 0);
+		glTexCoord2f(1, 1); glVertex3f(1, 0, 0);
+		glTexCoord2f(1, 0);	glVertex3f(1, 1, 0);
+		glTexCoord2f(0, 0);	glVertex3f(0, 1, 0);
 	}
 	glEnd();
 
@@ -169,15 +326,53 @@ void sb::Sandbox::Render(float dt)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	{
+		ImGui::Begin("Raytracing");      
+
+		if (ImGui::CollapsingHeader("Instructions", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::BulletText("Press WASD to move");
+			ImGui::BulletText("Use the mouse to rotate");
+			ImGui::BulletText("Press \"Render\" to render the scene");
+		}
+
+
+		if (ImGui::CollapsingHeader("Info", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			float cameraPos[3] = { m_Scene->CameraPosition.X, m_Scene->CameraPosition.Y, m_Scene->CameraPosition.Z };
+			float lookDir[3] = { m_Scene->LookDirection.X, m_Scene->LookDirection.Y, m_Scene->LookDirection.Z };
+
+			ImGui::InputFloat3("Camera position", cameraPos, 3, ImGuiInputTextFlags_ReadOnly);
+			ImGui::InputFloat3("Look direction", lookDir, 3, ImGuiInputTextFlags_ReadOnly);
+		}
+
+		if (ImGui::CollapsingHeader("Options", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+
+			ImGui::Checkbox("Supersampling", &Settings.Supersampling);
+			ImGui::SliderInt("Max Recursion", &Settings.MaxRecursion, 0, 2);
+			ImGui::Combo("Ground Material", &Settings.GroundMaterial, "Checkerboard\0Marble\0Worley");
+			ImGui::Combo("Sky", &Settings.Sky, "Day\0Night");
+			ImGui::Checkbox("Lamps switch", &Settings.LampsSwitch);
+		}
+
+		auto status = m_Raytracer->GetStatus();
+
+		if (status.Finished) 
+		{
+			if (ImGui::Button("Render", { ImGui::GetContentRegionAvailWidth(), 0 })) {
+				std::promise<re::Renderer::RenderStatus> p;
+				m_RaytracerFuture = p.get_future();
+				m_Raytracer->Render(m_Scene.get(), std::move(p));
+				m_SceneDirty = false;
+			};
+		} 
+		else
+		{
+			ImGui::ProgressBar(status.Percent);
+		}
 		
-		ImGui::Begin("Raytracing");                         
-		ImGui::Checkbox("Supersampling", &Settings.Supersampling);
-		ImGui::SliderInt("Max Recursion", &Settings.MaxRecursion, 0, 2);
-		ImGui::Combo("Ground Material", &Settings.GroundMaterial, "Checkerboard\0Marble\0Worley");
-		ImGui::Combo("Sky", &Settings.Sky, "Day\0Night");
-		ImGui::Checkbox("Lamps switch", &Settings.LampsSwitch);
 		ImGui::End();
-		
+
 	}
 	ImGui::Render();
 
@@ -217,7 +412,9 @@ void sb::Sandbox::InitScene()
 {
 	m_Scene = std::shared_ptr<re::Scene>(new re::Scene());
 
-	m_Scene->CameraPosition = { 0, 1, 0 };
+	m_Scene->CameraPosition = { -2.88, 7.86, -4.26 };
+	m_CameraDir.Alpha = 0.9;
+	m_CameraDir.Beta = -0.8;
 
 	static auto makeDirectionalLight = [](re::Color color, re::Vector3 direction)
 	{
@@ -284,7 +481,7 @@ void sb::Sandbox::InitScene()
 		groundNode->GetComponentOfType<re::Transform>()->Position = { 0, -1, 0 };
 		m_Ground = groundNode->AddComponent<re::Plane>();
 		m_Ground->Normal = { 0, 1, 0 };
-		m_Ground->Material = m_Materials["bw_checker"].get();
+		m_Ground->Material = nullptr;
 	}
 
 }

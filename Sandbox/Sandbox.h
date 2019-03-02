@@ -4,6 +4,7 @@
 #include <memory>
 #include <map>
 #include <array>
+#include <future>
 #include <RealityEngine.h>
 
 
@@ -25,6 +26,10 @@ namespace sb
 		int Start(unsigned int width, unsigned int height);
 
 		void Resize(unsigned int width, unsigned int height);
+		void KeyPressed(int keycode);
+		void MouseMoved(float x, float y);
+		void MousePressed(int button);
+		void MouseReleased(int button);
 
 	private:
 
@@ -46,6 +51,7 @@ namespace sb
 
 		unsigned int m_Width, m_Height;
 
+		bool m_SceneDirty = true;
 
 		struct {
 			bool Supersampling;
@@ -54,6 +60,8 @@ namespace sb
 			int Sky = 0;
 			bool LampsSwitch = false;
 		} Settings;
+
+		std::future<re::Renderer::RenderStatus> m_RaytracerFuture;
 
 		std::vector<std::shared_ptr<re::Background>> m_SkyBoxes;
 		std::vector<std::shared_ptr<re::Light>> m_AmbientLights;
@@ -73,10 +81,17 @@ namespace sb
 
 		re::Plane * m_Ground;
 
+		re::Vector2 m_PrevDragPos, m_CurrDragPos;
+
+		struct {
+			float Alpha = re::PI / 2;
+			float Beta = 0;
+		} m_CameraDir;
+
 		static constexpr float CMovementSpeed = 10.0f;
 		static constexpr float CSphereDistance = 4.0f;
 
-		static constexpr float MoveSpeed = 4.0f;
+		static constexpr float MoveSpeed = 8.0f;
 
 	};
 }

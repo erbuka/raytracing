@@ -285,3 +285,11 @@ re::Vector3 re::Triangle::GetNormal(const Vector3 & point) const
 	// CCW Normal computation
 	return Cross(Vertices[1] - Vertices[0], Vertices[2] - Vertices[1]).Normalized();
 }
+
+unsigned int * re::Renderer::RenderSync(Scene * scene)
+{
+	std::promise<RenderStatus> p;
+	auto f = p.get_future();
+	Render(scene, std::move(p));
+	return f.get().Pixels;
+}

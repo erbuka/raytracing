@@ -20,50 +20,68 @@ re::AbstractRaycaster::~AbstractRaycaster()
 	delete[] m_Pixels;
 }
 
-unsigned int * re::AbstractRaycaster::Render(Scene * m_Scene)
+void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 {
+	m_Status = { false, false, 0, m_Pixels };
 
-	std::vector<std::function<void()>> functions;
+	auto threadFunc = [scene, this](std::promise<RenderStatus> p) {
 
-	m_Scene->Compile();
+		std::vector<std::function<void()>> functions;
 
-	if (functions.size() == 0)
-	{
+		scene->Compile();
+
 		unsigned int pixelsPerThread = std::ceil((real)m_ViewWidth / m_NumThreads);
 		for (unsigned int i = 0; i < m_NumThreads; i++) {
 			functions.push_back(std::bind(
 				&AbstractRaycaster::DoRaytraceThread,
 				this,
-				m_Scene,
+				scene,
 				(unsigned int)i * pixelsPerThread,
 				(unsigned int)(i + 1) * pixelsPerThread
-				));
+			));
 		}
-	}
+		
+		std::vector<std::future<void>> futures;
+
+		for (auto func : functions)
+		{
+			futures.push_back(std::async(std::launch::async, func));
+		}
+
+		for (auto &f : futures)
+		{
+			f.wait();
+		}
+	
+		m_Status.Finished = true;
+
+		p.set_value(m_Status);
 
 
-	std::vector<std::future<void>> futures;
+	};
 
-	for (auto func : functions)
-	{
-		futures.push_back(std::async(func));
-	}
+	std::thread th(threadFunc, std::move(p));
+	th.detach();
 
-	for (auto &f : futures)
-	{
-		f.wait();
-	}
+}
 
-	return m_Pixels;
+void re::AbstractRaycaster::Interrupt()
+{
+	m_Status.Interruped = true;
+}
+
+re::Renderer::RenderStatus re::AbstractRaycaster::GetStatus()
+{
+	return m_Status;
 }
 
 
 re::Ray re::AbstractRaycaster::CreateScreenRay(Scene * m_Scene, real x, real y)
 {
 	// GetSeed axis base
-	Vector3 forward = m_Scene->LookDirection;
-	Vector3 right = Cross(forward, Vector3::Up);
-	Vector3 up = Cross(right, forward);
+	Vector3 forward = m_Scene->LookDirection.Normalized();
+	Vector3 right = Cross(forward, Vector3::Up).Normalized();
+	Vector3 up = Cross(right, forward).Normalized();
 
 	real h2 = std::atan(m_FoVY);
 	real w2 = h2 * (real)m_ViewWidth / (real)m_ViewHeight;
@@ -102,6 +120,12 @@ void re::AbstractRaycaster::DoRaytraceThread(Scene * m_Scene, unsigned int minX,
 				Ray ray = CreateScreenRay(m_Scene, x, y);
 				m_Pixels[y * m_ViewWidth + x] = Raycast(m_Scene, ray).GetHexValue();
 			}
+
+			m_Status.Percent += 1.0f / (m_ViewWidth * m_ViewHeight);
+
+			if (m_Status.Interruped)
+				return;
+
 		}
 	}
 }

@@ -2,6 +2,7 @@
 #include "Common.h"
 #include "Scene.h"
 
+
 #define RE_DEBUG
 
 namespace re
@@ -17,7 +18,9 @@ namespace re
 		AbstractRaycaster(unsigned int viewWidth, unsigned int viewHeight, real fovY = PI / 6.0f);
 		~AbstractRaycaster();
 
-		virtual unsigned int * Render(Scene * m_Scene) override;
+		virtual void Render(Scene * scene, std::promise<RenderStatus> p) override;
+		virtual void Interrupt() override;
+		virtual RenderStatus GetStatus() override;
 
 		bool SuperSampling;
 
@@ -26,11 +29,13 @@ namespace re
 		virtual Color Raycast(Scene * m_Scene, const Ray& ray) = 0;
 
 		unsigned int * m_Pixels;
-		unsigned int m_NumThreads = 8;
+		unsigned int m_NumThreads = 4;
 
 	private:
 		Ray CreateScreenRay(Scene * m_Scene, real x, real y);
 		void DoRaytraceThread(Scene * m_Scene, unsigned int minX, unsigned int maxX);
+
+		RenderStatus m_Status = { true, true, 0, m_Pixels };
 
 	};
 

@@ -2,8 +2,7 @@
 #include "Common.h"
 #include "Material.h"
 #include <vector>
-#include <stack>
-#include <cassert>
+#include <future>
 
 namespace re
 {
@@ -31,10 +30,27 @@ namespace re
 	class Renderer
 	{
 	public:
+
+		struct RenderStatus {
+			bool Finished;
+			bool Interruped;
+			float Percent;
+			unsigned int * Pixels;
+		};
+
 		Renderer(size_t viewWidth, size_t viewHeight, real fovY = PI / 6) :
 			m_ViewWidth(viewWidth), m_ViewHeight(viewHeight), m_FoVY(fovY) {}
+		
+		virtual ~Renderer() { }
 
-		virtual unsigned int * Render(Scene * m_Scene) = 0;
+		virtual unsigned int * RenderSync(Scene * scene);
+		virtual void Render(Scene * scene, std::promise<RenderStatus> promise) = 0;
+		virtual RenderStatus GetStatus() = 0;
+		virtual void Interrupt() = 0;
+
+		virtual size_t GetViewWidth() { return m_ViewWidth; }
+		virtual size_t GetViewHeight() { return m_ViewHeight; }
+
 	protected:
 		size_t m_ViewWidth, m_ViewHeight;
 		real m_FoVY;
