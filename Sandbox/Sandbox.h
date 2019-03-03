@@ -5,6 +5,7 @@
 #include <map>
 #include <array>
 #include <future>
+#include <tuple>
 #include <RealityEngine.h>
 
 
@@ -42,6 +43,9 @@ namespace sb
 		void Render(float dt);
 
 		void StartRaytracer();
+
+		std::pair<re::real, re::real> GetCursorPos();
+		std::pair<re::real, re::real> GetWindowSize();
 
 		std::shared_ptr<re::Material> sb::Sandbox::CreateMarble(std::shared_ptr<re::Material> dark, std::shared_ptr<re::Material> bright);
 		std::shared_ptr<re::Material> sb::Sandbox::CreatePerlin(std::shared_ptr<re::Material> first, std::shared_ptr<re::Material> second);
@@ -83,7 +87,7 @@ namespace sb
 
 		re::Plane * m_Ground;
 
-		re::Vector2 m_PrevDragPos, m_CurrDragPos;
+		std::pair<re::real, re::real> m_PrevDragPos, m_CurrDragPos;
 
 		struct {
 			float Alpha = re::PI / 2;

@@ -154,16 +154,13 @@ void sb::Sandbox::MouseMoved(float x, float y)
 {
 	if (glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{
-		double x, y;
-		int w, h;
-
-		glfwGetCursorPos(m_Window, &x, &y);
-		m_CurrDragPos = { x, y };
-
-		glfwGetWindowSize(m_Window, &w, &h);
-
-		float dx = (m_CurrDragPos.X - m_PrevDragPos.X) / w;
-		float dy = (m_CurrDragPos.Y - m_PrevDragPos.Y) / h;
+		m_CurrDragPos = GetCursorPos();
+		
+		re::real w, h;
+		std::tie(w, h) = GetWindowSize();
+		
+		float dx = (m_CurrDragPos.first - m_PrevDragPos.first) / w;
+		float dy = (m_CurrDragPos.second - m_PrevDragPos.second) / h;
 
 		m_CameraDir.Alpha += dx * re::PI;
 		m_CameraDir.Beta += dy * re::PI;
@@ -185,9 +182,7 @@ void sb::Sandbox::MousePressed(int button)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT)
 	{
-		double x, y;
-		glfwGetCursorPos(m_Window, &x, &y);
-		m_CurrDragPos = m_PrevDragPos = { x, y };
+		m_CurrDragPos = m_PrevDragPos = GetCursorPos();
 	}
 }
 
@@ -388,6 +383,20 @@ void sb::Sandbox::StartRaytracer()
 	m_SceneDirty = false;
 }
 
+std::pair<re::real,re::real> sb::Sandbox::GetCursorPos()
+{
+	double x, y;
+	glfwGetCursorPos(m_Window, &x, &y);
+	return { static_cast<re::real>(x), static_cast<re::real>(y) };
+}
+
+std::pair<re::real, re::real> sb::Sandbox::GetWindowSize()
+{
+	int x, y;
+	glfwGetWindowSize(m_Window, &x, &y);
+	return { static_cast<re::real>(x), static_cast<re::real>(y) };
+}
+
 void sb::Sandbox::InitMaterials()
 {
 	m_Materials.insert({ "red", std::shared_ptr<re::Material>(new re::UniformMaterial(0xf44336, 0.6f)) });
@@ -396,7 +405,7 @@ void sb::Sandbox::InitMaterials()
 	m_Materials.insert({ "dark_red", std::shared_ptr<re::Material>(new re::UniformMaterial(0x8d1007, 0.9f)) });
 	m_Materials.insert({ "dark_green", std::shared_ptr<re::Material>(new re::UniformMaterial(0x265728, 0.9f)) });
 	m_Materials.insert({ "dark_blue", std::shared_ptr<re::Material>(new re::UniformMaterial(0x074b83, 0.9f)) });
-	m_Materials.insert({ "glass_black", std::shared_ptr<re::Material>(new re::UniformMaterial(0x000000, 0.4f)) });
+	m_Materials.insert({ "glass_black", std::shared_ptr<re::Material>(new re::UniformMaterial(0x000000, 0.8f)) });
 	m_Materials.insert({ "glass_white", std::shared_ptr<re::Material>(new re::UniformMaterial(0xffffff, 0.4f)) });
 	m_Materials.insert({ "mirror", std::shared_ptr<re::Material>(new re::UniformMaterial(0xffffff, 0.0f)) });
 
@@ -444,7 +453,6 @@ void sb::Sandbox::InitScene()
 
 	{
 
-		//m_AmbientLights.push_back(std::shared_ptr<re::Light>(makeAmbientLight(0x222222)));
 		m_AmbientLights.push_back(std::shared_ptr<re::Light>(makeAmbientLight(0)));
 		m_AmbientLights.push_back(std::shared_ptr<re::Light>(makeAmbientLight(0)));
 

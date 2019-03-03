@@ -4,7 +4,7 @@
 #include <vector>
 namespace re
 {
-	typedef long double real;
+	typedef double real;
 
 	constexpr real PI = 3.14159265359f;
 

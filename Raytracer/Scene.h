@@ -138,13 +138,17 @@ namespace re
 	class Shape : public Component
 	{
 	public:
-		Shape(SceneNode * owner) : Component(owner) {}
+		Shape(SceneNode * owner);
 		
 		re::Material * Material = (re::Material*)&(UniformMaterial::OpaqueWhite);
+
+		unsigned int GetID() { return m_ID; }
 
 		virtual void Compile() override {}
 		virtual RayHitResult Intersect(const Ray& ray) = 0;
 		virtual Vector3 GetNormal(const Vector3& point) const = 0;
+	protected:
+		unsigned int m_ID;
 	};
 
 

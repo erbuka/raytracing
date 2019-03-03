@@ -322,3 +322,10 @@ unsigned int * re::Renderer::RenderSync(Scene * scene)
 	Render(scene, std::move(p));
 	return f.get().Pixels;
 }
+
+re::Shape::Shape(SceneNode * owner) : Component(owner)
+{
+	static unsigned int nextID = 1;
+	m_ID = nextID;
+	nextID = std::max(1u, nextID + 1);
+}

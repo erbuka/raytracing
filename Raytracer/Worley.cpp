@@ -42,7 +42,7 @@ re::real re::Worley::SampleNormalized(const Vector3 & point)
 		{
 			for (int dz = -1; dz <= 1; dz++)
 			{
-				auto& p = GetPointAt(x + dx, y + dy, z + dz);
+				auto p = GetPointAt(x + dx, y + dy, z + dz);
 				real d = (p - point).SquaredLength();
 				if (d < distance)
 				{

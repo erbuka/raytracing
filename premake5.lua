@@ -68,33 +68,3 @@ project "Sandbox"
     postbuildcommands {
         "{COPY} ../vendor/glfw/lib/glfw3.dll ../bin/%{cfg.buildcfg}/%{prj.name}" 
     }            
-
-
-project "Sandbox0"
-    kind "ConsoleApp"
-    language "C++"
-    location "Sandbox0"
-    
-    targetdir "bin/%{cfg.buildcfg}/%{prj.name}"
-    debugdir "bin/%{cfg.buildcfg}/%{prj.name}"
-    objdir "bin-int/%{cfg.buildcfg}/%{prj.name}"
-
-    files { "%{prj.name}/**.h", "%{prj.name}/**.cpp" }
-
-    includedirs { "Raytracer", "vendor/SFML/include" }
-
-    defines { "SFML_STATIC" }
-
-    libdirs { "vendor/SFML/lib" }
-
-    links { "Raytracer", "freetype", "opengl32", "winmm", "gdi32" }
-
-    postbuildcommands {
-        "{COPY} res/ ../bin/%{cfg.buildcfg}/%{prj.name}/res"
-    }            
-
-    filter "configurations:Debug"
-        links { "sfml-system-s-d", "sfml-window-s-d", "sfml-graphics-s-d" }
-
-    filter "configurations:Release"
-        links { "sfml-system-s", "sfml-window-s", "sfml-graphics-s" }  

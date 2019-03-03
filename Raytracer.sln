@@ -9,8 +9,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImGui", "vendor\imgui\ImGui
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Raytracer", "Raytracer\Raytracer.vcxproj", "{32530D40-9EBD-C1B6-E7FB-725C53A59F0B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sandbox0", "Sandbox0\Sandbox0.vcxproj", "{A400BD47-90CD-1753-B9E6-05FBA5124DE1}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -33,10 +31,6 @@ Global
 		{32530D40-9EBD-C1B6-E7FB-725C53A59F0B}.Debug|x64.Build.0 = Debug|x64
 		{32530D40-9EBD-C1B6-E7FB-725C53A59F0B}.Release|x64.ActiveCfg = Release|x64
 		{32530D40-9EBD-C1B6-E7FB-725C53A59F0B}.Release|x64.Build.0 = Release|x64
-		{A400BD47-90CD-1753-B9E6-05FBA5124DE1}.Debug|x64.ActiveCfg = Debug|x64
-		{A400BD47-90CD-1753-B9E6-05FBA5124DE1}.Debug|x64.Build.0 = Debug|x64
-		{A400BD47-90CD-1753-B9E6-05FBA5124DE1}.Release|x64.ActiveCfg = Release|x64
-		{A400BD47-90CD-1753-B9E6-05FBA5124DE1}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
