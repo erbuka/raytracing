@@ -60,7 +60,7 @@ namespace sb
 		bool m_SceneDirty = true;
 
 		struct {
-			bool Supersampling;
+			re::Raytracer::AAMode Antialiasing = re::Raytracer::AAMode::None;
 			int MaxRecursion = 1;
 			int GroundMaterial = 0;
 			int Sky = 0;

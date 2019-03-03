@@ -7,16 +7,18 @@
 #include <limits>
 #include <chrono>
 #include <future>
+#include <array>
 
 re::AbstractRaycaster::AbstractRaycaster(unsigned int viewWidth, unsigned int viewHeight, real fovY) :
-	Renderer::Renderer(viewWidth, viewHeight, fovY),
-	SuperSampling(false)
+	Renderer::Renderer(viewWidth, viewHeight, fovY)
 {
+	m_ColorBuffer0 = new Color[m_ViewWidth * m_ViewHeight];
 	m_Pixels = new unsigned int[m_ViewWidth * m_ViewHeight];
 }
 
 re::AbstractRaycaster::~AbstractRaycaster()
 {
+	delete[] m_ColorBuffer0;
 	delete[] m_Pixels;
 }
 
@@ -30,8 +32,9 @@ void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 
 		scene->Compile();
 
-		unsigned int pixelsPerThread = std::ceil((real)m_ViewWidth / m_NumThreads);
-		for (unsigned int i = 0; i < m_NumThreads; i++) {
+		unsigned int pixelsPerThread = std::ceil((real)m_ViewWidth / NumThreads);
+		for (unsigned int i = 0; i < NumThreads; i++) 
+		{
 			functions.push_back(std::bind(
 				&AbstractRaycaster::DoRaytraceThread,
 				this,
@@ -52,7 +55,15 @@ void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 		{
 			f.wait();
 		}
-	
+
+		if (Antialiasing == AAMode::FXAA)
+		{
+			FXAA();
+		}
+
+		ColorsToPixels(m_ColorBuffer0, m_Pixels);
+		
+		m_Status.Pixels = m_Pixels;
 		m_Status.Finished = true;
 
 		p.set_value(m_Status);
@@ -103,7 +114,7 @@ void re::AbstractRaycaster::DoRaytraceThread(Scene * m_Scene, unsigned int minX,
 	{
 		for (int y = 0; y < m_ViewHeight; y++)
 		{
-			if (SuperSampling) {
+			if (Antialiasing == AAMode::SSAA) {
 				Color result(Color::Black);
 				for (int dx = -1; dx <= 1; dx++)
 				{
@@ -113,12 +124,12 @@ void re::AbstractRaycaster::DoRaytraceThread(Scene * m_Scene, unsigned int minX,
 						result += (Raycast(m_Scene, ray) * (1.0f / 9.0f));
 					}
 				}
-				m_Pixels[y * m_ViewWidth + x] = result.GetHexValue();
+				m_ColorBuffer0[y * m_ViewWidth + x] = result;
 			}
 			else
 			{
 				Ray ray = CreateScreenRay(m_Scene, x, y);
-				m_Pixels[y * m_ViewWidth + x] = Raycast(m_Scene, ray).GetHexValue();
+				m_ColorBuffer0[y * m_ViewWidth + x] = Raycast(m_Scene, ray);
 			}
 
 			m_Status.Percent += 1.0f / (m_ViewWidth * m_ViewHeight);
@@ -126,6 +137,45 @@ void re::AbstractRaycaster::DoRaytraceThread(Scene * m_Scene, unsigned int minX,
 			if (m_Status.Interruped)
 				return;
 
+		}
+	}
+}
+
+void re::AbstractRaycaster::FXAA()
+{
+	
+	auto fxaaFunc = [this](unsigned int minX, unsigned int maxX) {
+		for (unsigned int x = minX; x < maxX && x < m_ViewWidth; x++)
+		{
+			for (unsigned int y = 0; y < m_ViewHeight; y++)
+			{
+
+			}
+		}
+	};
+
+	unsigned int pixelsPerThread = std::ceil((real)m_ViewWidth / NumThreads);
+	std::vector<std::future<void>> futures;
+	for (unsigned int i = 0; i < NumThreads; i++)
+	{
+		futures.push_back(std::async(std::launch::async, std::bind(fxaaFunc, i * pixelsPerThread, (i + 1) * pixelsPerThread)));
+	}
+
+	for (auto& f : futures)
+	{
+		f.wait();
+	}
+
+}
+
+void re::AbstractRaycaster::ColorsToPixels(Color * cb, unsigned int * pixels)
+{
+	for (unsigned int x = 0; x < m_ViewWidth; x++)
+	{
+		for (unsigned int y = 0; y < m_ViewHeight; y++)
+		{
+			unsigned int idx = y * m_ViewWidth + x;
+			pixels[idx] = m_ColorBuffer0[idx].GetHexValue();
 		}
 	}
 }

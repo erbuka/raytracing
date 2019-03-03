@@ -240,7 +240,7 @@ void sb::Sandbox::Update(float dt)
 		std::cos(m_CameraDir.Beta) * std::sin(m_CameraDir.Alpha)
 	};
 
-	m_Raytracer->SuperSampling = Settings.Supersampling;
+	m_Raytracer->Antialiasing = Settings.Antialiasing;
 	m_Raytracer->MaxRecursion = Settings.MaxRecursion;
 
 
@@ -345,8 +345,7 @@ void sb::Sandbox::Render(float dt)
 
 		if (ImGui::CollapsingHeader("Options", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-
-			ImGui::Checkbox("Supersampling", &Settings.Supersampling);
+			ImGui::Combo("Antialiasing", (int*)&Settings.Antialiasing, "None\0FXAA\0SSAA");
 			ImGui::SliderInt("Max Recursion", &Settings.MaxRecursion, 0, 3);
 			ImGui::Combo("Ground Material", &Settings.GroundMaterial, "Checkerboard\0Marble\0Worley");
 			ImGui::Combo("Sky", &Settings.Sky, "Day\0Night");

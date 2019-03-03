@@ -162,6 +162,8 @@ namespace re
 		Color& operator*=(const Color& other);
 		Color& operator*=(real t);
 
+		real Luma() const;
+
 	};
 
 	Color operator+(const Color& lhs, const Color& rhs);

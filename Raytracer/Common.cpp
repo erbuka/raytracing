@@ -114,8 +114,7 @@ std::ostream & re::operator<<(std::ostream & os, const Vector3 & v)
 	return os;
 }
 
-re::Vector3 re::operator+(const Vector3 & lhs, const Vector3 & rhs)
-{
+re::Vector3 re::operator+(const Vector3 & lhs, const Vector3 & rhs) {
 	return Vector3(lhs.X + rhs.X, lhs.Y + rhs.Y, lhs.Z + rhs.Z);
 }
 
@@ -297,6 +296,11 @@ re::Color & re::Color::operator*=(real t)
 	G = Clamp(G * t, (real)0.0f, (real)1.0f);
 	B = Clamp(B * t, (real)0.0f, (real)1.0f);
 	return *this;
+}
+
+re::real re::Color::Luma() const
+{
+	return 0.299f * R + 0.587f * G + 0.114f * B;
 }
 
 re::RayHitResult re::BoundingBox::Intersect(const Ray & ray)

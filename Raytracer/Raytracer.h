@@ -15,6 +15,13 @@ namespace re
 	{
 	public:
 
+		enum class AAMode : int
+		{
+			None = 0,
+			FXAA = 1,
+			SSAA = 2
+		};
+
 		AbstractRaycaster(unsigned int viewWidth, unsigned int viewHeight, real fovY = PI / 6.0f);
 		~AbstractRaycaster();
 
@@ -22,18 +29,24 @@ namespace re
 		virtual void Interrupt() override;
 		virtual RenderStatus GetStatus() override;
 
-		bool SuperSampling;
+		AAMode Antialiasing = AAMode::None;
+
+		unsigned int NumThreads = 4;
 
 	protected:
 
 		virtual Color Raycast(Scene * m_Scene, const Ray& ray) = 0;
 
-		unsigned int * m_Pixels;
-		unsigned int m_NumThreads = 4;
+		Color *m_ColorBuffer0;
+
+		unsigned int *m_Pixels;
 
 	private:
 		Ray CreateScreenRay(Scene * m_Scene, real x, real y);
 		void DoRaytraceThread(Scene * m_Scene, unsigned int minX, unsigned int maxX);
+		void FXAA();
+
+		void ColorsToPixels(Color *cb, unsigned int *pixels);
 
 		RenderStatus m_Status = { true, true, 0, m_Pixels };
 
