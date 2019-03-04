@@ -90,9 +90,9 @@
     <ClInclude Include="Noise.h" />
     <ClInclude Include="Perlin.h" />
     <ClInclude Include="Raytracer.h" />
-    <ClInclude Include="RealityEngine.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Worley.h" />
+    <ClInclude Include="re.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CheckerBoard.cpp" />

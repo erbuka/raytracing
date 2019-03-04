@@ -62,8 +62,6 @@
       <AdditionalIncludeDirectories>..\Raytracer;..\vendor\imgui;..\vendor\glfw\include;..\vendor\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
-      <LanguageStandard>
-      </LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

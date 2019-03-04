@@ -56,11 +56,6 @@ void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 			f.wait();
 		}
 
-		if (Antialiasing == AAMode::FXAA)
-		{
-			FXAA();
-		}
-
 		ColorsToPixels(m_ColorBuffer0, m_Pixels);
 		
 		m_Status.Pixels = m_Pixels;
@@ -78,7 +73,11 @@ void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 
 void re::AbstractRaycaster::Interrupt()
 {
-	m_Status.Interruped = true;
+	if (!m_Status.Finished)
+	{
+		m_Status.Interruped = true;
+	}
+
 }
 
 re::Renderer::RenderStatus re::AbstractRaycaster::GetStatus()
@@ -139,33 +138,6 @@ void re::AbstractRaycaster::DoRaytraceThread(Scene * m_Scene, unsigned int minX,
 
 		}
 	}
-}
-
-void re::AbstractRaycaster::FXAA()
-{
-	
-	auto fxaaFunc = [this](unsigned int minX, unsigned int maxX) {
-		for (unsigned int x = minX; x < maxX && x < m_ViewWidth; x++)
-		{
-			for (unsigned int y = 0; y < m_ViewHeight; y++)
-			{
-
-			}
-		}
-	};
-
-	unsigned int pixelsPerThread = std::ceil((real)m_ViewWidth / NumThreads);
-	std::vector<std::future<void>> futures;
-	for (unsigned int i = 0; i < NumThreads; i++)
-	{
-		futures.push_back(std::async(std::launch::async, std::bind(fxaaFunc, i * pixelsPerThread, (i + 1) * pixelsPerThread)));
-	}
-
-	for (auto& f : futures)
-	{
-		f.wait();
-	}
-
 }
 
 void re::AbstractRaycaster::ColorsToPixels(Color * cb, unsigned int * pixels)

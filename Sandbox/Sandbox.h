@@ -6,7 +6,7 @@
 #include <array>
 #include <future>
 #include <tuple>
-#include <RealityEngine.h>
+#include <re.h>
 
 
 #include <imgui.h>
@@ -61,7 +61,7 @@ namespace sb
 
 		struct {
 			re::Raytracer::AAMode Antialiasing = re::Raytracer::AAMode::None;
-			int MaxRecursion = 1;
+			int MaxRecursion = 3;
 			int GroundMaterial = 0;
 			int Sky = 0;
 			bool LampsSwitch = false;
@@ -81,7 +81,7 @@ namespace sb
 		std::vector<std::shared_ptr<re::Material>> m_GroundMaterials;
 		std::vector<std::shared_ptr<re::Light>> m_Lamps;
 
-		std::array<re::Color, 4> m_LampColors = { 0xc7ffbc, 0xffc1bc, 0xbcc3ff, 0xfff8bc };
+		std::array<re::Color, 4> m_LampColors = { 0x00ff00, 0xff0000, 0x0000ff, 0x00ffff };
 
 		GLuint m_FastTexture, m_Texture;
 

@@ -96,8 +96,9 @@ int sb::Sandbox::Start(unsigned int width, unsigned int height)
 	InitScene();
 
 	m_Raytracer = std::shared_ptr<re::Raytracer>(new re::Raytracer(m_Width, m_Height));
-	m_Raycaster = std::shared_ptr<re::DebugRaycaster>(new re::DebugRaycaster(m_Width / 4, m_Height / 4));
+	m_Raytracer->NumThreads = 8;
 
+	m_Raycaster = std::shared_ptr<re::DebugRaycaster>(new re::DebugRaycaster(m_Width / 4, m_Height / 4));
 	m_Raycaster->Mode = re::DebugRaycaster::Modes::Color;
 
 	auto currTime = std::chrono::high_resolution_clock::now();
@@ -140,11 +141,7 @@ void sb::Sandbox::KeyPressed(int keycode)
 	{
 		auto status = m_Raytracer->GetStatus();
 
-		if (!status.Finished)
-		{
-			m_Raytracer->Interrupt();
-		}
-
+		m_Raytracer->Interrupt();
 		m_SceneDirty = true;
 
 	}
@@ -167,12 +164,9 @@ void sb::Sandbox::MouseMoved(float x, float y)
 
 		if (dx != 0 || dy != 0)
 		{
-			auto status = m_Raytracer->GetStatus();
 			m_SceneDirty = true;
 			m_Raytracer->Interrupt();
-
 		}
-			
 
 		m_PrevDragPos = m_CurrDragPos;
 	}
@@ -262,18 +256,22 @@ void sb::Sandbox::Update(float dt)
 	m_Scene->Background = m_SkyBoxes[Settings.Sky].get();
 
 	auto status = m_Raytracer->GetStatus();
+	
+	if (status.Finished) {
+		if (!m_SceneDirty && !status.Interruped)
+		{
+			glBindTexture(GL_TEXTURE_2D, m_Texture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Raytracer->GetViewWidth(), m_Raytracer->GetViewHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, status.Pixels);
+		}
+		else
+		{
+			unsigned int * pixels = m_Raycaster->RenderSync(m_Scene.get());
+			glBindTexture(GL_TEXTURE_2D, m_FastTexture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Raycaster->GetViewWidth(), m_Raycaster->GetViewHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+		}
+	}
 
-	if (!m_SceneDirty && status.Finished && !status.Interruped)
-	{
-		glBindTexture(GL_TEXTURE_2D, m_Texture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Raytracer->GetViewWidth(), m_Raytracer->GetViewHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, status.Pixels);
-	}
-	else
-	{
-		unsigned int * pixels = m_Raycaster->RenderSync(m_Scene.get());
-		glBindTexture(GL_TEXTURE_2D, m_FastTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Raycaster->GetViewWidth(), m_Raycaster->GetViewHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-	}
+
 	
 	auto right = re::Cross(m_Scene->LookDirection, re::Vector3::Up);
 
@@ -345,7 +343,7 @@ void sb::Sandbox::Render(float dt)
 
 		if (ImGui::CollapsingHeader("Options", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ImGui::Combo("Antialiasing", (int*)&Settings.Antialiasing, "None\0FXAA\0SSAA");
+			ImGui::Combo("Antialiasing", (int*)&Settings.Antialiasing, "None\0SSAA");
 			ImGui::SliderInt("Max Recursion", &Settings.MaxRecursion, 0, 3);
 			ImGui::Combo("Ground Material", &Settings.GroundMaterial, "Checkerboard\0Marble\0Worley");
 			ImGui::Combo("Sky", &Settings.Sky, "Day\0Night");

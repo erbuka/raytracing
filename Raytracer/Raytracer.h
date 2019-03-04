@@ -18,8 +18,7 @@ namespace re
 		enum class AAMode : int
 		{
 			None = 0,
-			FXAA = 1,
-			SSAA = 2
+			SSAA = 1
 		};
 
 		AbstractRaycaster(unsigned int viewWidth, unsigned int viewHeight, real fovY = PI / 6.0f);
@@ -44,7 +43,6 @@ namespace re
 	private:
 		Ray CreateScreenRay(Scene * m_Scene, real x, real y);
 		void DoRaytraceThread(Scene * m_Scene, unsigned int minX, unsigned int maxX);
-		void FXAA();
 
 		void ColorsToPixels(Color *cb, unsigned int *pixels);
 
