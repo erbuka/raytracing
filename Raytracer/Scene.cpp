@@ -1,14 +1,24 @@
 #include "Scene.h"
 #include <cassert>
 
+re::SkyBox::SkyBox(Color color0, Color color1, Light * sun)
+	: m_SkyColor0(color0), m_SkyColor1(color1), m_Sun(sun)
+{
+	m_Perlin = std::make_shared<Perlin>(1);
+}
+
 re::Color re::SkyBox::GetColor(const Vector3 & direction) const
 {
+	
 	constexpr float thresold = 0.98f;
 	constexpr float border = (1.0f - thresold) / 2.0f;
 	constexpr float thresoldPlusBorder = thresold + border;
 
 	// Get the current sky color
-	auto color = Lerp(m_SkyTop, m_SkyBottom, std::fmaxf(0, 1.0 - (direction ^ Vector3::Up)));
+	//auto color = Lerp(m_SkyTop, m_SkyBottom, std::fmaxf(0, 1.0 - (direction ^ Vector3::Up)));
+	
+	real sample = m_Perlin->Sample((direction + Vector3::One) / 2);
+	auto color = Mix(m_SkyColor0, m_SkyColor1, sample);
 
 	if (m_Sun != nullptr && m_Sun->Type == LightType::Directional)
 	{
@@ -33,6 +43,9 @@ re::Color re::SkyBox::GetColor(const Vector3 & direction) const
 	{
 		return color;
 	}
+	
+
+
 
 }
 

@@ -8,6 +8,11 @@ namespace re
 
 	constexpr real PI = 3.14159265359f;
 
+	inline real Map(real value, real sa, real sb, real da, real db)
+	{
+		return da + (value - sa) / (sb - sa)*(db - da);
+	}
+
 	template<typename T> inline T Random(T min = 0, T max = 1)
 	{
 		return (T)(min + (max - min) * ((double)rand() / RAND_MAX));

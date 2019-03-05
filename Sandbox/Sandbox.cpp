@@ -106,7 +106,6 @@ int sb::Sandbox::Start(unsigned int width, unsigned int height)
 
 	glfwSetWindowUserPointer(m_Window, this);
 
-	StartRaytracer();
 
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(m_Window))
@@ -221,32 +220,35 @@ void sb::Sandbox::Update(float dt)
 		return status == GLFW_PRESS || status == GLFW_REPEAT;
 	};
 
-	m_Scene->LookDirection = re::Vector3{
-		std::cos(m_CameraDir.Beta) * std::cos(m_CameraDir.Alpha),
-		std::sin(m_CameraDir.Beta),
-		std::cos(m_CameraDir.Beta) * std::sin(m_CameraDir.Alpha)
-	};
-
-	m_Raytracer->Antialiasing = Settings.Antialiasing;
-	m_Raytracer->MaxRecursion = Settings.MaxRecursion;
-
-
-	m_Ground->Material = m_GroundMaterials[Settings.GroundMaterial].get();
-	
-	m_Scene->Lights.clear();
-
-	m_Scene->Lights.push_back(m_AmbientLights[Settings.Sky].get());
-	m_Scene->Lights.push_back(m_DirectionalLights[Settings.Sky].get());
-
-	if (Settings.LampsSwitch)
+	if (m_Raytracer->GetStatus().Finished)
 	{
-		for (auto &l : m_Lamps)
-		{
-			m_Scene->Lights.push_back(l.get());
-		}
-	}
+		m_Scene->LookDirection = re::Vector3{
+			std::cos(m_CameraDir.Beta) * std::cos(m_CameraDir.Alpha),
+			std::sin(m_CameraDir.Beta),
+			std::cos(m_CameraDir.Beta) * std::sin(m_CameraDir.Alpha)
+		};
 
-	m_Scene->Background = m_SkyBoxes[Settings.Sky].get();
+		m_Raytracer->Antialiasing = Settings.Antialiasing;
+		m_Raytracer->MaxRecursion = Settings.MaxRecursion;
+
+
+		m_Ground->Material = m_GroundMaterials[Settings.GroundMaterial].get();
+
+		m_Scene->Lights.clear();
+
+		m_Scene->Lights.push_back(m_AmbientLights[Settings.Sky].get());
+		m_Scene->Lights.push_back(m_DirectionalLights[Settings.Sky].get());
+
+		if (Settings.LampsSwitch)
+		{
+			for (auto &l : m_Lamps)
+			{
+				m_Scene->Lights.push_back(l.get());
+			}
+		}
+
+		m_Scene->Background = m_SkyBoxes[Settings.Sky].get();
+	}
 
 	auto right = re::Cross(m_Scene->LookDirection, re::Vector3::Up);
 
@@ -453,11 +455,12 @@ void sb::Sandbox::InitScene()
 		m_AmbientLights.push_back(std::shared_ptr<re::Light>(makeAmbientLight(0)));
 		m_AmbientLights.push_back(std::shared_ptr<re::Light>(makeAmbientLight(0)));
 
-		m_DirectionalLights.push_back(std::shared_ptr<re::Light>(makeDirectionalLight(0x00ffddee, { 1, 1, -1 })));
-		m_DirectionalLights.push_back(std::shared_ptr<re::Light>(makeDirectionalLight(0x00353532, { 1, 1, -1 })));
+		m_DirectionalLights.push_back(std::shared_ptr<re::Light>(makeDirectionalLight(0xffddee, { 1, 1, -1 })));
+		m_DirectionalLights.push_back(std::shared_ptr<re::Light>(makeDirectionalLight(0x353532, { 1, 1, -1 })));
 
-		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x009CE5FF, 0x00C3FAFF, m_DirectionalLights[0].get())));
-		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x0005061c, 0x000c0f47, m_DirectionalLights[1].get())));
+		//m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x009CE5FF, 0x00C3FAFF, m_DirectionalLights[0].get())));
+		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x4444ff, 0xffffff, m_DirectionalLights[0].get())));
+		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x000033, 0x444444, m_DirectionalLights[1].get())));
 
 	}
 

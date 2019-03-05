@@ -1,6 +1,7 @@
 #pragma once
 #include "Common.h"
 #include "Material.h"
+#include "Perlin.h"
 #include <vector>
 #include <future>
 
@@ -65,15 +66,15 @@ namespace re
 	class SkyBox : public Background
 	{
 	public:
-		SkyBox(Color skyTop, Color skyBottom, Light* sun = nullptr) 
-			: m_SkyTop(skyTop), m_SkyBottom(skyBottom), m_Sun(sun) {}
+		SkyBox(Color color0, Color color1, Light* sun = nullptr);
 
 		virtual Color GetColor(const Vector3& direction) const override;
 
 		float SunFactor = 128.0f;
 
 	private:
-		Color m_SkyTop, m_SkyBottom;
+		std::shared_ptr<Perlin> m_Perlin;
+		Color m_SkyColor0, m_SkyColor1;
 		Light* m_Sun;
 	};
 
