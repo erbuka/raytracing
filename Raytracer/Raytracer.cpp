@@ -73,11 +73,7 @@ void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 
 void re::AbstractRaycaster::Interrupt()
 {
-	if (!m_Status.Finished)
-	{
-		m_Status.Interruped = true;
-	}
-
+	m_Status.Interruped = true;
 }
 
 re::Renderer::RenderStatus re::AbstractRaycaster::GetStatus()

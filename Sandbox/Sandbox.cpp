@@ -137,14 +137,7 @@ void sb::Sandbox::Resize(unsigned int width, unsigned int height)
 
 void sb::Sandbox::KeyPressed(int keycode)
 {
-	if (keycode == GLFW_KEY_W || keycode == GLFW_KEY_S || keycode == GLFW_KEY_A || keycode == GLFW_KEY_D)
-	{
-		auto status = m_Raytracer->GetStatus();
 
-		m_Raytracer->Interrupt();
-		m_SceneDirty = true;
-
-	}
 }
 
 void sb::Sandbox::MouseMoved(float x, float y)
@@ -255,44 +248,51 @@ void sb::Sandbox::Update(float dt)
 
 	m_Scene->Background = m_SkyBoxes[Settings.Sky].get();
 
-	auto status = m_Raytracer->GetStatus();
-	
-	if (status.Finished) {
-		if (!m_SceneDirty && !status.Interruped)
-		{
-			glBindTexture(GL_TEXTURE_2D, m_Texture);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Raytracer->GetViewWidth(), m_Raytracer->GetViewHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, status.Pixels);
-		}
-		else
-		{
-			unsigned int * pixels = m_Raycaster->RenderSync(m_Scene.get());
-			glBindTexture(GL_TEXTURE_2D, m_FastTexture);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Raycaster->GetViewWidth(), m_Raycaster->GetViewHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-		}
-	}
-
-
-	
 	auto right = re::Cross(m_Scene->LookDirection, re::Vector3::Up);
 
 	if (isKeyDown(GLFW_KEY_W))
 	{
 		m_Scene->CameraPosition = m_Scene->CameraPosition + m_Scene->LookDirection * MoveSpeed * dt;
+		m_SceneDirty = true;
 	}
 	else if (isKeyDown(GLFW_KEY_S))
 	{
 		m_Scene->CameraPosition = m_Scene->CameraPosition - m_Scene->LookDirection * MoveSpeed * dt;
+		m_SceneDirty = true;
 	}
 
 	if (isKeyDown(GLFW_KEY_D))
 	{
 		m_Scene->CameraPosition = m_Scene->CameraPosition + right * MoveSpeed * dt;
+		m_SceneDirty = true;
 	}
 	else if (isKeyDown(GLFW_KEY_A))
 	{
 		m_Scene->CameraPosition = m_Scene->CameraPosition - right * MoveSpeed * dt;
+		m_SceneDirty = true;
 	}
 
+	if (m_SceneDirty)
+	{
+		m_SceneDirty = false;
+		m_ValidRender = false;
+		m_Raytracer->Interrupt();
+
+		unsigned int * pixels = m_Raycaster->RenderSync(m_Scene.get());
+		glBindTexture(GL_TEXTURE_2D, m_FastTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Raycaster->GetViewWidth(), m_Raycaster->GetViewHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	}
+	else
+	{
+		auto status = m_Raytracer->GetStatus();
+
+		if (!m_ValidRender && status.Finished && !status.Interruped)
+		{
+			glBindTexture(GL_TEXTURE_2D, m_Texture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Raytracer->GetViewWidth(), m_Raytracer->GetViewHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, status.Pixels);
+			m_ValidRender = true;
+		}
+	}
 
 }
 
@@ -305,7 +305,7 @@ void sb::Sandbox::Render(float dt)
 	/* Scene */
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glBindTexture(GL_TEXTURE_2D, !m_SceneDirty && status.Finished && !status.Interruped ? m_Texture : m_FastTexture);
+	glBindTexture(GL_TEXTURE_2D, m_ValidRender ? m_Texture : m_FastTexture);
 
 	glBegin(GL_QUADS);
 	{
@@ -377,7 +377,7 @@ void sb::Sandbox::StartRaytracer()
 	std::promise<re::Renderer::RenderStatus> p;
 	m_RaytracerFuture = p.get_future();
 	m_Raytracer->Render(m_Scene.get(), std::move(p));
-	m_SceneDirty = false;
+	m_ValidRender = false;
 }
 
 std::pair<re::real,re::real> sb::Sandbox::GetCursorPos()

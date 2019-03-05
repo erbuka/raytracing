@@ -57,7 +57,7 @@ namespace sb
 
 		unsigned int m_Width, m_Height;
 
-		bool m_SceneDirty = true;
+		bool m_SceneDirty = true, m_ValidRender = false;
 
 		struct {
 			re::Raytracer::AAMode Antialiasing = re::Raytracer::AAMode::None;
