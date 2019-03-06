@@ -342,3 +342,13 @@ re::Shape::Shape(SceneNode * owner) : Component(owner)
 	m_ID = nextID;
 	nextID = std::max(1u, nextID + 1);
 }
+
+re::RayHitResult re::Mesh::Intersect(const Ray & ray)
+{
+	return RayHitResult();
+}
+
+re::Vector3 re::Mesh::GetNormal(const Vector3 & point) const
+{
+	return Vector3();
+}

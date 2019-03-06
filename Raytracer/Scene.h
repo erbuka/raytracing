@@ -188,6 +188,16 @@ namespace re
 		virtual Vector3 GetNormal(const Vector3& point) const override;
 	};
 
+	class Mesh : public Shape
+	{
+	public:
+		Mesh(SceneNode * owner) : Shape(owner) { }
+
+		virtual RayHitResult Intersect(const Ray& ray) override;
+		virtual Vector3 GetNormal(const Vector3& point) const override;
+
+	};
+
 	class SceneNode
 	{
 	public:

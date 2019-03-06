@@ -27,7 +27,7 @@ namespace sb
 		int Start(unsigned int width, unsigned int height);
 
 		void Resize(unsigned int width, unsigned int height);
-		void KeyPressed(int keycode);
+		void KeyPressed(int keycode, bool repeat);
 		void MouseMoved(float x, float y);
 		void MousePressed(int button);
 		void MouseReleased(int button);
@@ -57,7 +57,7 @@ namespace sb
 
 		unsigned int m_Width, m_Height;
 
-		bool m_SceneDirty = true, m_ValidRender = false;
+		bool m_SceneDirty = true, m_ValidRender = false, m_ShowImGui = true;
 
 		struct {
 			re::Raytracer::AAMode Antialiasing = re::Raytracer::AAMode::None;

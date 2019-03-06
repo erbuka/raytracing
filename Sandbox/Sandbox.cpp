@@ -21,7 +21,7 @@ static void GLFW_KeyCallback(GLFWwindow* window, int keycode, int scancode, int 
 	{
 	case GLFW_PRESS:
 	case GLFW_REPEAT:
-		sandbox->KeyPressed(keycode);
+		sandbox->KeyPressed(keycode, action == GLFW_REPEAT);
 		break;
 	}
 }
@@ -134,9 +134,12 @@ void sb::Sandbox::Resize(unsigned int width, unsigned int height)
 	glViewport(0, 0, width, height);
 }
 
-void sb::Sandbox::KeyPressed(int keycode)
+void sb::Sandbox::KeyPressed(int keycode, bool repeat)
 {
-
+	if (keycode == GLFW_KEY_SPACE && !repeat)
+	{
+		m_ShowImGui = !m_ShowImGui;
+	}
 }
 
 void sb::Sandbox::MouseMoved(float x, float y)
@@ -319,58 +322,60 @@ void sb::Sandbox::Render(float dt)
 	glEnd();
 
 	/* ImGUI */
-
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
+	if (m_ShowImGui)
 	{
-		ImGui::Begin("Raytracing");      
-
-		if (ImGui::CollapsingHeader("Instructions", ImGuiTreeNodeFlags_DefaultOpen))
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 		{
-			ImGui::BulletText("Press WASD to move");
-			ImGui::BulletText("Use the mouse to rotate");
-			ImGui::BulletText("Press \"Render\" to render the scene");
+			ImGui::Begin("Raytracing");
+
+			if (ImGui::CollapsingHeader("Instructions", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::BulletText("Press WASD to move");
+				ImGui::BulletText("Use the mouse to rotate");
+				ImGui::BulletText("Press \"Render\" button to render the scene");
+				ImGui::BulletText("Press SPACE key to hide/show this window");
+			}
+
+			if (ImGui::CollapsingHeader("Info", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				float cameraPos[3] = { m_Scene->CameraPosition.X, m_Scene->CameraPosition.Y, m_Scene->CameraPosition.Z };
+				float lookDir[3] = { m_Scene->LookDirection.X, m_Scene->LookDirection.Y, m_Scene->LookDirection.Z };
+
+				ImGui::InputFloat3("Camera position", cameraPos, 3, ImGuiInputTextFlags_ReadOnly);
+				ImGui::InputFloat3("Look direction", lookDir, 3, ImGuiInputTextFlags_ReadOnly);
+			}
+
+			if (ImGui::CollapsingHeader("Options", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::Combo("Antialiasing", (int*)&Settings.Antialiasing, "None\0SSAA");
+				ImGui::SliderInt("Max Recursion", &Settings.MaxRecursion, 0, 3);
+				ImGui::Combo("Ground Material", &Settings.GroundMaterial, "Checkerboard\0Marble\0Worley");
+				ImGui::Combo("Sky", &Settings.Sky, "Day\0Night");
+				ImGui::Checkbox("Lights on", &Settings.LampsSwitch);
+			}
+
+			auto status = m_Raytracer->GetStatus();
+
+			if (status.Finished)
+			{
+				if (ImGui::Button("Render", { ImGui::GetContentRegionAvailWidth(), 0 })) {
+					StartRaytracer();
+				};
+			}
+			else
+			{
+				ImGui::ProgressBar(status.Percent);
+			}
+
+			ImGui::End();
+
 		}
+		ImGui::Render();
 
-
-		if (ImGui::CollapsingHeader("Info", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			float cameraPos[3] = { m_Scene->CameraPosition.X, m_Scene->CameraPosition.Y, m_Scene->CameraPosition.Z };
-			float lookDir[3] = { m_Scene->LookDirection.X, m_Scene->LookDirection.Y, m_Scene->LookDirection.Z };
-
-			ImGui::InputFloat3("Camera position", cameraPos, 3, ImGuiInputTextFlags_ReadOnly);
-			ImGui::InputFloat3("Look direction", lookDir, 3, ImGuiInputTextFlags_ReadOnly);
-		}
-
-		if (ImGui::CollapsingHeader("Options", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			ImGui::Combo("Antialiasing", (int*)&Settings.Antialiasing, "None\0SSAA");
-			ImGui::SliderInt("Max Recursion", &Settings.MaxRecursion, 0, 3);
-			ImGui::Combo("Ground Material", &Settings.GroundMaterial, "Checkerboard\0Marble\0Worley");
-			ImGui::Combo("Sky", &Settings.Sky, "Day\0Night");
-			ImGui::Checkbox("Lamps switch", &Settings.LampsSwitch);
-		}
-
-		auto status = m_Raytracer->GetStatus();
-
-		if (status.Finished) 
-		{
-			if (ImGui::Button("Render", { ImGui::GetContentRegionAvailWidth(), 0 })) {
-				StartRaytracer();
-			};
-		} 
-		else
-		{
-			ImGui::ProgressBar(status.Percent);
-		}
-		
-		ImGui::End();
-
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
-	ImGui::Render();
-
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 }
 
