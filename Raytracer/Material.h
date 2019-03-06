@@ -1,6 +1,6 @@
 #pragma once
 #include "Common.h"
-#include "CheckerBoard.h"
+#include "noise/CheckerBoard.h"
 #include <memory>
 
 

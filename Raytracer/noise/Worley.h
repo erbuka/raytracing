@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Noise.h"
-#include "Common.h"
+#include "../Common.h"
 #include <memory>
 namespace re
 {

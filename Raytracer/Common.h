@@ -186,6 +186,7 @@ namespace re
 	{
 		bool Hit = false;
 		Vector3 Point = Vector3::Zero;
+		Vector3 Normal = Vector3::Zero;
 	};
 
 	class Raytraceable
@@ -198,7 +199,7 @@ namespace re
 	{
 	public:
 		
-		const Vector3 Min, Max;
+		Vector3 Min, Max;
 
 		BoundingBox() : Min(), Max() {}
 		BoundingBox(Vector3 min, Vector3 max) : Min(min), Max(max) {}

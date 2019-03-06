@@ -107,7 +107,7 @@ re::Scene::RaycastResult re::Scene::CastRayRecursive(const Ray & ray, SceneNode 
 				raycastResult.Point = worldPoint;
 				raycastResult.LocalPoint = result.Point;
 				// Calculate normal in world coordinates
-				raycastResult.Normal = Vector3(tmat * Vector4(shape->GetNormal(result.Point), 0)).Normalized();
+				raycastResult.Normal = Vector3(tmat * Vector4(result.Normal, 0)).Normalized();
 				raycastResult.Node = currentNode;
 				hitDistance = distance;
 			}
@@ -239,13 +239,9 @@ re::RayHitResult re::Sphere::Intersect(const Ray & ray)
 
 	result.Hit = true;
 	result.Point = ray.Origin + ray.Direction * (t1 >= 0.0f ? t1 : t2);
+	result.Normal = result.Point.Normalized();
 
 	return result;
-}
-
-re::Vector3 re::Sphere::GetNormal(const Vector3 & point) const
-{
-	return point.Normalized();
 }
 
 re::RayHitResult re::Plane::Intersect(const Ray & ray)
@@ -275,15 +271,15 @@ re::RayHitResult re::Plane::Intersect(const Ray & ray)
 	// The plane has been hit
 	result.Hit = true;
 	result.Point = ray.Origin + ray.Direction * (distance / -cosine);
+	result.Normal = Normal;
 
 	return result;
 }
 
-
 re::RayHitResult re::Triangle::Intersect(const Ray & ray)
 {
 	RayHitResult result;
-	Vector3 normal = GetNormal(Vector3::Zero);
+	Vector3 normal = Cross(Vertices[1] - Vertices[0], Vertices[2] - Vertices[1]).Normalized();
 	Vector3 t0 = (Vertices[1] - Vertices[0]).Normalized();
 	Vector3 t1 = (Vertices[2] - Vertices[0]).Normalized();
 
@@ -309,23 +305,19 @@ re::RayHitResult re::Triangle::Intersect(const Ray & ray)
 	Vector3 projection = ray.Origin + ray.Direction * (distance / -cosine);
 
 	// "Inside-Outside" method
+	
 	if ((normal ^ (Cross(Vertices[1] - Vertices[0], projection - Vertices[0]))) > 0 &&
 		(normal ^ (Cross(Vertices[2] - Vertices[1], projection - Vertices[1]))) > 0 &&
 		(normal ^ (Cross(Vertices[0] - Vertices[2], projection - Vertices[2]))) > 0)
 	{
 		result.Hit = true;
 		result.Point = projection;
+		result.Normal = normal;
 	}
 
 	return result;
 
 
-}
-
-re::Vector3 re::Triangle::GetNormal(const Vector3 & point) const
-{
-	// CCW Normal computation
-	return Cross(Vertices[1] - Vertices[0], Vertices[2] - Vertices[1]).Normalized();
 }
 
 unsigned int * re::Renderer::RenderSync(Scene * scene)
@@ -345,10 +337,50 @@ re::Shape::Shape(SceneNode * owner) : Component(owner)
 
 re::RayHitResult re::Mesh::Intersect(const Ray & ray)
 {
-	return RayHitResult();
+	RayHitResult result;
+	
+	// Check against the mesh bounding box first
+	if (!m_BoundingBox.Intersect(ray).Hit)
+		return result;
+
+	real distance = std::numeric_limits<real>::max();
+
+	// Find, if extits, the closest triangle that is intersected
+	// by the ray
+	for (auto &t : m_Triangles)
+	{
+		auto r = t.Intersect(ray);
+		auto d = (r.Point - ray.Origin).SquaredLength();
+		if (r.Hit && d < distance)
+		{
+			result.Hit = true;
+			result.Point = r.Point;
+			result.Normal = r.Normal;
+			distance = d;
+		}
+	}
+
+	return result;
 }
 
-re::Vector3 re::Mesh::GetNormal(const Vector3 & point) const
+void re::Mesh::AddTriangle(std::array<Vector3, 3>& vertices)
 {
-	return Vector3();
+	Triangle t(m_Owner);
+	t.Vertices = vertices;
+
+	auto& min = m_BoundingBox.Min;
+	auto& max = m_BoundingBox.Min;
+
+	for (auto &v : vertices)
+	{
+		min.X = std::min(min.X, v.X);
+		min.Y = std::min(min.Y, v.Y);
+		min.Z = std::min(min.Z, v.Z);
+
+		max.X = std::max(min.X, v.X);
+		max.Y = std::max(min.Y, v.Y);
+		max.Z = std::max(min.Z, v.Z);
+	}
+
+	m_Triangles.push_back(t);
 }

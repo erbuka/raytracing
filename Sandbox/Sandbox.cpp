@@ -151,7 +151,7 @@ void sb::Sandbox::MouseMoved(float x, float y)
 		re::real w, h;
 		std::tie(w, h) = GetWindowSize();
 		
-		float dx = (m_CurrDragPos.first - m_PrevDragPos.first) / w;
+		float dx = -(m_CurrDragPos.first - m_PrevDragPos.first) / w;
 		float dy = (m_CurrDragPos.second - m_PrevDragPos.second) / h;
 
 		m_CameraDir.Alpha += dx * re::PI;
@@ -432,9 +432,16 @@ void sb::Sandbox::InitScene()
 {
 	m_Scene = std::shared_ptr<re::Scene>(new re::Scene());
 
+	/*
 	m_Scene->CameraPosition = { -2.88, 7.86, -4.26 };
 	m_CameraDir.Alpha = 0.9;
 	m_CameraDir.Beta = -0.8;
+	*/
+
+
+	m_Scene->CameraPosition = { 0, 3, 20 };
+	m_CameraDir.Alpha = -re::PI/2;
+	m_CameraDir.Beta = 0;
 
 	static auto makeDirectionalLight = [](re::Color color, re::Vector3 direction)
 	{
@@ -505,7 +512,6 @@ void sb::Sandbox::InitScene()
 		m_Ground->Normal = { 0, 1, 0 };
 		m_Ground->Material = nullptr;
 	}
-
 }
 
 

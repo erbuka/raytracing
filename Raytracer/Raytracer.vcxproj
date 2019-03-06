@@ -83,27 +83,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CheckerBoard.h" />
     <ClInclude Include="Common.h" />
-    <ClInclude Include="Marble.h" />
     <ClInclude Include="Material.h" />
-    <ClInclude Include="Noise.h" />
-    <ClInclude Include="Perlin.h" />
     <ClInclude Include="Raytracer.h" />
     <ClInclude Include="Scene.h" />
-    <ClInclude Include="Worley.h" />
+    <ClInclude Include="noise\CheckerBoard.h" />
+    <ClInclude Include="noise\Marble.h" />
+    <ClInclude Include="noise\Noise.h" />
+    <ClInclude Include="noise\Perlin.h" />
+    <ClInclude Include="noise\Worley.h" />
     <ClInclude Include="re.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CheckerBoard.cpp" />
     <ClCompile Include="Common.cpp" />
-    <ClCompile Include="Marble.cpp" />
     <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Noise.cpp" />
-    <ClCompile Include="Perlin.cpp" />
     <ClCompile Include="Raytracer.cpp" />
     <ClCompile Include="Scene.cpp" />
-    <ClCompile Include="Worley.cpp" />
+    <ClCompile Include="noise\CheckerBoard.cpp" />
+    <ClCompile Include="noise\Marble.cpp" />
+    <ClCompile Include="noise\Noise.cpp" />
+    <ClCompile Include="noise\Perlin.cpp" />
+    <ClCompile Include="noise\Worley.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

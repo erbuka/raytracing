@@ -138,13 +138,13 @@ re::real re::operator^(const Vector3 & lhs, const Vector3 & rhs)
 	return lhs.X * rhs.X + lhs.Y * rhs.Y + lhs.Z * rhs.Z;
 }
 
-re::Vector3 re::Cross(const Vector3 & lhs, const Vector3 & rhs)
-{
-	return Vector3(
-		lhs.Z * rhs.Y - lhs.Y * rhs.Z,
-		lhs.X * rhs.Z - lhs.Z * rhs.X,
-		lhs.Y * rhs.X - lhs.X * rhs.Y
-		);
+re::Vector3 re::Cross(const Vector3 & b, const Vector3 & c)
+{	
+	return {
+		b.Y * c.Z - b.Z * c.Y,
+		b.Z * c.X - b.X * c.Z,
+		b.X * c.Y - b.Y * c.X
+	};
 }
 
 re::Matrix4 re::operator*(const Matrix4 & lhs, const Matrix4 & rhs)

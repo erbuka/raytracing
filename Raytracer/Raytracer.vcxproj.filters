@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="noise">
+      <UniqueIdentifier>{83330410-EF47-2CC1-B8C9-CF20249D28F2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="Raytracer.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="noise\CheckerBoard.h">
+      <Filter>noise</Filter>
+    </ClInclude>
+    <ClInclude Include="noise\Marble.h">
+      <Filter>noise</Filter>
+    </ClInclude>
+    <ClInclude Include="noise\Noise.h">
+      <Filter>noise</Filter>
+    </ClInclude>
+    <ClInclude Include="noise\Perlin.h">
+      <Filter>noise</Filter>
+    </ClInclude>
+    <ClInclude Include="noise\Worley.h">
+      <Filter>noise</Filter>
+    </ClInclude>
+    <ClInclude Include="re.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Common.cpp" />
+    <ClCompile Include="Material.cpp" />
+    <ClCompile Include="Raytracer.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="noise\CheckerBoard.cpp">
+      <Filter>noise</Filter>
+    </ClCompile>
+    <ClCompile Include="noise\Marble.cpp">
+      <Filter>noise</Filter>
+    </ClCompile>
+    <ClCompile Include="noise\Noise.cpp">
+      <Filter>noise</Filter>
+    </ClCompile>
+    <ClCompile Include="noise\Perlin.cpp">
+      <Filter>noise</Filter>
+    </ClCompile>
+    <ClCompile Include="noise\Worley.cpp">
+      <Filter>noise</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,9 +1,10 @@
 #pragma once
 #include "Common.h"
 #include "Material.h"
-#include "Perlin.h"
+#include "noise/Perlin.h"
 #include <vector>
 #include <future>
+#include <array>
 
 namespace re
 {
@@ -147,7 +148,6 @@ namespace re
 
 		virtual void Compile() override {}
 		virtual RayHitResult Intersect(const Ray& ray) = 0;
-		virtual Vector3 GetNormal(const Vector3& point) const = 0;
 	protected:
 		unsigned int m_ID;
 	};
@@ -160,7 +160,6 @@ namespace re
 		Sphere(SceneNode * owner) : Shape(owner) {}
 
 		virtual RayHitResult Intersect(const Ray& ray) override; // Ray is in local coordinates
-		virtual Vector3 GetNormal(const Vector3& point) const override; // Point is in local coordinates
 	};
 
 
@@ -172,7 +171,6 @@ namespace re
 		Plane(SceneNode * owner) : Shape(owner) {}
 
 		virtual RayHitResult Intersect(const Ray& ray) override;
-		virtual Vector3 GetNormal(const Vector3& point) const override { return Normal; }
 
 	};
 
@@ -180,22 +178,25 @@ namespace re
 	{
 	public:
 
-		Vector3 Vertices[3];
+		std::array<Vector3, 3> Vertices;
 
 		Triangle(SceneNode * owner) : Shape(owner) {}
 
 		virtual RayHitResult Intersect(const Ray& ray) override;
-		virtual Vector3 GetNormal(const Vector3& point) const override;
 	};
 
 	class Mesh : public Shape
 	{
 	public:
+
 		Mesh(SceneNode * owner) : Shape(owner) { }
-
 		virtual RayHitResult Intersect(const Ray& ray) override;
-		virtual Vector3 GetNormal(const Vector3& point) const override;
+		
+		void AddTriangle(std::array<Vector3, 3>& vertices);
 
+	private:
+		std::vector<Triangle> m_Triangles;
+		re::BoundingBox m_BoundingBox;
 	};
 
 	class SceneNode
