@@ -1,5 +1,7 @@
 #include "Sandbox.h"
 
+#include "WavefrontLoader.h"
+
 #include <chrono>
 
 
@@ -100,6 +102,7 @@ int sb::Sandbox::Start(unsigned int width, unsigned int height)
 
 	m_Raycaster = std::shared_ptr<re::DebugRaycaster>(new re::DebugRaycaster(m_Width / 4, m_Height / 4));
 	m_Raycaster->Mode = re::DebugRaycaster::Modes::Color;
+	m_Raycaster->NumThreads = 4;
 
 	auto currTime = std::chrono::high_resolution_clock::now();
 	auto prevTime = std::chrono::high_resolution_clock::now();
@@ -512,6 +515,26 @@ void sb::Sandbox::InitScene()
 		m_Ground->Normal = { 0, 1, 0 };
 		m_Ground->Material = nullptr;
 	}
+
+	// Debug
+
+	{
+		auto wf = sb::LoadWavefront("res/bunny.obj_");
+		auto meshNode = m_Scene->GetRoot()->AddChild();
+		auto mesh = meshNode->AddComponent<re::Mesh>();
+
+		meshNode->GetComponentOfType<re::Transform>()->Scale = { .1,.1,.1 };
+
+		for (auto f : wf["bunny"])
+		{
+			mesh->AddTriangle(std::array<re::Vector3, 3>{ f.Vertices[0], f.Vertices[1], f.Vertices[2] });
+		}
+
+		mesh->Material = m_Materials["dark_red"].get();
+		
+
+	}
+
 }
 
 

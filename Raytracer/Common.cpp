@@ -8,6 +8,8 @@ const re::Vector3 re::Vector3::Right = re::Vector3(1, 0, 0);
 const re::Vector3 re::Vector3::Zero = re::Vector3(0, 0, 0);
 const re::Vector3 re::Vector3::One = re::Vector3(1, 1, 1);
 
+const re::Vector2 re::Vector2::Zero = re::Vector2(0, 0);
+
 const re::Matrix4 re::Matrix4::Identity = {
 	1.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, 1.0f, 0.0f, 0.0f,

@@ -7,6 +7,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Sandbox.h" />
+    <ClInclude Include="WavefrontLoader.h" />
     <ClInclude Include="imgui\imgui_impl_glfw.h">
       <Filter>imgui</Filter>
     </ClInclude>
@@ -17,6 +18,7 @@
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Sandbox.cpp" />
+    <ClCompile Include="WavefrontLoader.cpp" />
     <ClCompile Include="imgui\imgui_impl_glfw.cpp">
       <Filter>imgui</Filter>
     </ClCompile>

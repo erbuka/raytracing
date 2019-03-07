@@ -56,6 +56,8 @@ namespace re
 
 	union Vector2
 	{
+		static const Vector2 Zero;
+
 		Vector2() : X(0), Y(0) {}
 		Vector2(real x, real y) : X(x), Y(y) {}
 

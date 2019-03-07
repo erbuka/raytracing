@@ -51,6 +51,7 @@ project "Sandbox"
     kind "ConsoleApp"
     language "C++"
     location "Sandbox"
+    cppdialect "C++17"
 
     targetdir "bin/%{cfg.buildcfg}/%{prj.name}"
     debugdir "bin/%{cfg.buildcfg}/%{prj.name}"
@@ -66,5 +67,6 @@ project "Sandbox"
     defines { "IMGUI_IMPL_OPENGL_LOADER_GLAD" }
 
     postbuildcommands {
-        "{COPY} ../vendor/glfw/lib/glfw3.dll ../bin/%{cfg.buildcfg}/%{prj.name}" 
+        "{COPY} ../vendor/glfw/lib/glfw3.dll ../bin/%{cfg.buildcfg}/%{prj.name}/",
+        "{COPY} res/ ../bin/%{cfg.buildcfg}/%{prj.name}/res"  
     }            

@@ -369,7 +369,7 @@ void re::Mesh::AddTriangle(std::array<Vector3, 3>& vertices)
 	t.Vertices = vertices;
 
 	auto& min = m_BoundingBox.Min;
-	auto& max = m_BoundingBox.Min;
+	auto& max = m_BoundingBox.Max;
 
 	for (auto &v : vertices)
 	{
@@ -377,9 +377,9 @@ void re::Mesh::AddTriangle(std::array<Vector3, 3>& vertices)
 		min.Y = std::min(min.Y, v.Y);
 		min.Z = std::min(min.Z, v.Z);
 
-		max.X = std::max(min.X, v.X);
-		max.Y = std::max(min.Y, v.Y);
-		max.Z = std::max(min.Z, v.Z);
+		max.X = std::max(max.X, v.X);
+		max.Y = std::max(max.Y, v.Y);
+		max.Z = std::max(max.Z, v.Z);
 	}
 
 	m_Triangles.push_back(t);
