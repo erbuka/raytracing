@@ -191,13 +191,7 @@ namespace re
 		Vector3 Normal = Vector3::Zero;
 	};
 
-	class Raytraceable
-	{
-	public:
-		virtual RayHitResult Intersect(const Ray& ray) = 0;
-	};
-
-	class BoundingBox : public Raytraceable
+	class BoundingBox 
 	{
 	public:
 		
@@ -206,7 +200,7 @@ namespace re
 		BoundingBox() : Min(), Max() {}
 		BoundingBox(Vector3 min, Vector3 max) : Min(min), Max(max) {}
 
-		virtual RayHitResult Intersect(const Ray& ray) override;
+		virtual RayHitResult Intersect(const Ray& ray) const;
 	};
 
 

@@ -178,11 +178,18 @@ namespace re
 	{
 	public:
 
-		std::array<Vector3, 3> Vertices;
+		void SetVertices(const std::array<Vector3, 3>& v);
+		const std::array<Vector3, 3>& GetVertices() const { return Vertices; }
 
 		Triangle(SceneNode * owner) : Shape(owner) {}
 
 		virtual RayHitResult Intersect(const Ray& ray) override;
+
+	private:
+		std::array<Vector3, 3> Vertices;
+		Vector3 m_FaceNormal;
+		std::array<Vector3, 3> m_Edges;
+
 	};
 
 	class Mesh : public Shape

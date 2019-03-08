@@ -100,9 +100,9 @@ int sb::Sandbox::Start(unsigned int width, unsigned int height)
 	m_Raytracer = std::shared_ptr<re::Raytracer>(new re::Raytracer(m_Width, m_Height));
 	m_Raytracer->NumThreads = 8;
 
-	m_Raycaster = std::shared_ptr<re::DebugRaycaster>(new re::DebugRaycaster(m_Width / 4, m_Height / 4));
+	m_Raycaster = std::shared_ptr<re::DebugRaycaster>(new re::DebugRaycaster(m_Width / 8, m_Height / 8));
 	m_Raycaster->Mode = re::DebugRaycaster::Modes::Color;
-	m_Raycaster->NumThreads = 4;
+	m_Raycaster->NumThreads = 8;
 
 	auto currTime = std::chrono::high_resolution_clock::now();
 	auto prevTime = std::chrono::high_resolution_clock::now();
@@ -518,22 +518,26 @@ void sb::Sandbox::InitScene()
 
 	// Debug
 
+	
 	{
 		auto wf = sb::LoadWavefront("res/bunny.obj_");
 		auto meshNode = m_Scene->GetRoot()->AddChild();
 		auto mesh = meshNode->AddComponent<re::Mesh>();
 
-		meshNode->GetComponentOfType<re::Transform>()->Scale = { .1,.1,.1 };
+		meshNode->GetComponentOfType<re::Transform>()->Position.Z = -3;
+		meshNode->GetComponentOfType<re::Transform>()->Position.Y = -1;
+		meshNode->GetComponentOfType<re::Transform>()->Scale = { 2, 2, 2 };
+
 
 		for (auto f : wf["bunny"])
 		{
 			mesh->AddTriangle(std::array<re::Vector3, 3>{ f.Vertices[0], f.Vertices[1], f.Vertices[2] });
 		}
 
-		mesh->Material = m_Materials["dark_red"].get();
+		mesh->Material = m_Materials["red"].get();
 		
-
 	}
+
 
 }
 

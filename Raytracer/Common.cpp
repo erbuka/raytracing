@@ -305,7 +305,7 @@ re::real re::Color::Luma() const
 	return 0.299f * R + 0.587f * G + 0.114f * B;
 }
 
-re::RayHitResult re::BoundingBox::Intersect(const Ray & ray)
+re::RayHitResult re::BoundingBox::Intersect(const Ray & ray) const
 {
 	RayHitResult result;
 

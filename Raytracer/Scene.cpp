@@ -276,15 +276,25 @@ re::RayHitResult re::Plane::Intersect(const Ray & ray)
 	return result;
 }
 
+void re::Triangle::SetVertices(const std::array<Vector3, 3>& v)
+{
+	Vertices = v;
+	m_FaceNormal = Cross(Vertices[1] - Vertices[0], Vertices[2] - Vertices[1]).Normalized();
+	m_Edges = {
+		Vertices[1] - Vertices[0],
+		Vertices[2] - Vertices[1],
+		Vertices[0] - Vertices[2]
+	};
+}
+
 re::RayHitResult re::Triangle::Intersect(const Ray & ray)
 {
 	RayHitResult result;
-	Vector3 normal = Cross(Vertices[1] - Vertices[0], Vertices[2] - Vertices[1]).Normalized();
-	Vector3 t0 = (Vertices[1] - Vertices[0]).Normalized();
-	Vector3 t1 = (Vertices[2] - Vertices[0]).Normalized();
+	//Vector3 t0 = (Vertices[1] - Vertices[0]).Normalized();
+	//Vector3 t1 = (Vertices[2] - Vertices[0]).Normalized();
 
 	Vector3 l = ray.Origin - Vertices[0];
-	real distance = l ^ normal;
+	real distance = l ^ m_FaceNormal;
 
 	if (distance < 0)
 	{
@@ -292,7 +302,7 @@ re::RayHitResult re::Triangle::Intersect(const Ray & ray)
 		return result;
 	}
 
-	real cosine = ray.Direction ^ normal;
+	real cosine = ray.Direction ^ m_FaceNormal;
 
 	// Check if the ray is never intersecting the triangle plane
 	if (cosine >= 0)
@@ -306,13 +316,13 @@ re::RayHitResult re::Triangle::Intersect(const Ray & ray)
 
 	// "Inside-Outside" method
 	
-	if ((normal ^ (Cross(Vertices[1] - Vertices[0], projection - Vertices[0]))) > 0 &&
-		(normal ^ (Cross(Vertices[2] - Vertices[1], projection - Vertices[1]))) > 0 &&
-		(normal ^ (Cross(Vertices[0] - Vertices[2], projection - Vertices[2]))) > 0)
+	if ((m_FaceNormal ^ (Cross(m_Edges[0], projection - Vertices[0]))) > 0 &&
+		(m_FaceNormal ^ (Cross(m_Edges[1], projection - Vertices[1]))) > 0 &&
+		(m_FaceNormal ^ (Cross(m_Edges[2], projection - Vertices[2]))) > 0)
 	{
 		result.Hit = true;
 		result.Point = projection;
-		result.Normal = normal;
+		result.Normal = m_FaceNormal;
 	}
 
 	return result;
@@ -366,7 +376,7 @@ re::RayHitResult re::Mesh::Intersect(const Ray & ray)
 void re::Mesh::AddTriangle(std::array<Vector3, 3>& vertices)
 {
 	Triangle t(m_Owner);
-	t.Vertices = vertices;
+	t.SetVertices(vertices);
 
 	auto& min = m_BoundingBox.Min;
 	auto& max = m_BoundingBox.Max;
