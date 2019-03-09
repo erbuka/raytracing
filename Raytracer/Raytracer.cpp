@@ -32,6 +32,8 @@ void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 
 		scene->Compile();
 
+		m_CurrentRenderSlice = 0;
+
 		unsigned int pixelsPerThread = std::ceil((real)m_ViewWidth / NumThreads);
 		for (unsigned int i = 0; i < NumThreads; i++) 
 		{
@@ -105,7 +107,9 @@ re::Ray re::AbstractRaycaster::CreateScreenRay(Scene * m_Scene, real x, real y)
 
 void re::AbstractRaycaster::DoRaytraceThread(Scene * m_Scene, unsigned int minX, unsigned int maxX)
 {
-	for (int x = minX; x < maxX && x < m_ViewWidth; x++)
+	unsigned int x;
+
+	while(NextRenderSlice(x))
 	{
 		for (int y = 0; y < m_ViewHeight; y++)
 		{
@@ -145,6 +149,21 @@ void re::AbstractRaycaster::ColorsToPixels(Color * cb, unsigned int * pixels)
 			unsigned int idx = y * m_ViewWidth + x;
 			pixels[idx] = m_ColorBuffer0[idx].GetHexValue();
 		}
+	}
+}
+
+bool re::AbstractRaycaster::NextRenderSlice(unsigned int& sliceX)
+{
+	std::lock_guard<std::mutex> lock(m_RenderMutex);
+
+	if (m_CurrentRenderSlice == m_ViewWidth)
+	{
+		return false;
+	}
+	else
+	{
+		sliceX = m_CurrentRenderSlice++;
+		return true;
 	}
 }
 

@@ -41,12 +41,18 @@ namespace re
 		unsigned int *m_Pixels;
 
 	private:
+
+		unsigned int m_CurrentRenderSlice;
+		std::mutex m_RenderMutex;
+		RenderStatus m_Status = { true, true, 0, m_Pixels };
+
 		Ray CreateScreenRay(Scene * m_Scene, real x, real y);
 		void DoRaytraceThread(Scene * m_Scene, unsigned int minX, unsigned int maxX);
 
 		void ColorsToPixels(Color *cb, unsigned int *pixels);
 
-		RenderStatus m_Status = { true, true, 0, m_Pixels };
+		bool NextRenderSlice(unsigned int& sliceX);
+
 
 	};
 
