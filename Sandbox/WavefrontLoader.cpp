@@ -26,7 +26,7 @@ namespace sb
 				result = { std::atoi(str.c_str()), -1, -1 };
 			else if (pos1 == std::string::npos)
 				result = { std::atoi(str.substr(0, pos0).c_str()), std::atoi(str.substr(pos0 + 1).c_str()), 0 };
-			else if(pos0 == pos1 + 1)
+			else if(pos0 + 1 == pos1)
 				result = { std::atoi(str.substr(0, pos0).c_str()), 0, std::atoi(str.substr(pos1 + 1).c_str()) };
 			else
 				result = { std::atoi(str.substr(0, pos0).c_str()), std::atoi(str.substr(pos0 + 1, pos1).c_str()), std::atoi(str.substr(pos1 + 1).c_str()) };

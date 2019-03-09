@@ -13,6 +13,7 @@ namespace re
 	class SceneNode;
 
 	enum class LightType { Directional, Ambient, Point };
+	enum class NormalModes { Face, Vertex };
 
 	class Light
 	{
@@ -174,21 +175,24 @@ namespace re
 
 	};
 
-	class Triangle : public Shape
+	struct Triangle
 	{
 	public:
 
-		void SetVertices(const std::array<Vector3, 3>& v);
-		const std::array<Vector3, 3>& GetVertices() const { return Vertices; }
+		Triangle() {}
 
-		Triangle(SceneNode * owner) : Shape(owner) {}
+		std::array<Vector3, 3> Vertices, Normals;
 
-		virtual RayHitResult Intersect(const Ray& ray) override;
+		const Vector3 FaceNormal;
+		const std::array<Vector3, 3> Edges;
 
+
+		Vector3 Baricentric(const Vector3& point) const;
+
+		void Update();
 	private:
-		std::array<Vector3, 3> Vertices;
-		Vector3 m_FaceNormal;
-		std::array<Vector3, 3> m_Edges;
+		real m_D00, m_D01, m_D11;
+		real m_InvDen;
 
 	};
 
@@ -196,12 +200,23 @@ namespace re
 	{
 	public:
 
+		NormalModes NormalMode = NormalModes::Face;
+
 		Mesh(SceneNode * owner) : Shape(owner) { }
 		virtual RayHitResult Intersect(const Ray& ray) override;
 		
-		void AddTriangle(std::array<Vector3, 3>& vertices);
+		Triangle& AddTriangle();
+
+		void Compile() override;
+
+		void Invalidate();
 
 	private:
+
+		bool m_Invalidated = true;
+
+		RayHitResult IntersectTriangle(const Ray& ray, const Triangle& triangle) const;
+
 		std::vector<Triangle> m_Triangles;
 		re::BoundingBox m_BoundingBox;
 	};

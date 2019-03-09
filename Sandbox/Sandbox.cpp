@@ -525,14 +525,18 @@ void sb::Sandbox::InitScene()
 		auto mesh = meshNode->AddComponent<re::Mesh>();
 
 		meshNode->GetComponentOfType<re::Transform>()->Position.Z = -3;
-		meshNode->GetComponentOfType<re::Transform>()->Position.Y = -1;
+		meshNode->GetComponentOfType<re::Transform>()->Position.Y = 0;
 		meshNode->GetComponentOfType<re::Transform>()->Scale = { 2, 2, 2 };
 
 
 		for (auto f : wf["bunny"])
 		{
-			mesh->AddTriangle(std::array<re::Vector3, 3>{ f.Vertices[0], f.Vertices[1], f.Vertices[2] });
+			auto& t = mesh->AddTriangle();
+			t.Vertices = { f.Vertices[0], f.Vertices[1], f.Vertices[2] };
+			t.Normals = { f.Normals[0], f.Normals[1], f.Normals[2] };
 		}
+
+		mesh->NormalMode = re::NormalModes::Vertex;
 
 		mesh->Material = m_Materials["red"].get();
 		

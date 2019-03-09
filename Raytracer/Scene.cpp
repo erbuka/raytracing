@@ -276,59 +276,6 @@ re::RayHitResult re::Plane::Intersect(const Ray & ray)
 	return result;
 }
 
-void re::Triangle::SetVertices(const std::array<Vector3, 3>& v)
-{
-	Vertices = v;
-	m_FaceNormal = Cross(Vertices[1] - Vertices[0], Vertices[2] - Vertices[1]).Normalized();
-	m_Edges = {
-		Vertices[1] - Vertices[0],
-		Vertices[2] - Vertices[1],
-		Vertices[0] - Vertices[2]
-	};
-}
-
-re::RayHitResult re::Triangle::Intersect(const Ray & ray)
-{
-	RayHitResult result;
-	//Vector3 t0 = (Vertices[1] - Vertices[0]).Normalized();
-	//Vector3 t1 = (Vertices[2] - Vertices[0]).Normalized();
-
-	Vector3 l = ray.Origin - Vertices[0];
-	real distance = l ^ m_FaceNormal;
-
-	if (distance < 0)
-	{
-		// Ray origin "behind" the triangle plane
-		return result;
-	}
-
-	real cosine = ray.Direction ^ m_FaceNormal;
-
-	// Check if the ray is never intersecting the triangle plane
-	if (cosine >= 0)
-	{
-		return result;
-	}
-
-
-	// Project the ray on the triangle plane 
-	Vector3 projection = ray.Origin + ray.Direction * (distance / -cosine);
-
-	// "Inside-Outside" method
-	
-	if ((m_FaceNormal ^ (Cross(m_Edges[0], projection - Vertices[0]))) > 0 &&
-		(m_FaceNormal ^ (Cross(m_Edges[1], projection - Vertices[1]))) > 0 &&
-		(m_FaceNormal ^ (Cross(m_Edges[2], projection - Vertices[2]))) > 0)
-	{
-		result.Hit = true;
-		result.Point = projection;
-		result.Normal = m_FaceNormal;
-	}
-
-	return result;
-
-
-}
 
 unsigned int * re::Renderer::RenderSync(Scene * scene)
 {
@@ -359,7 +306,7 @@ re::RayHitResult re::Mesh::Intersect(const Ray & ray)
 	// by the ray
 	for (auto &t : m_Triangles)
 	{
-		auto r = t.Intersect(ray);
+		auto r = IntersectTriangle(ray, t);
 		auto d = (r.Point - ray.Origin).SquaredLength();
 		if (r.Hit && d < distance)
 		{
@@ -373,24 +320,145 @@ re::RayHitResult re::Mesh::Intersect(const Ray & ray)
 	return result;
 }
 
-void re::Mesh::AddTriangle(std::array<Vector3, 3>& vertices)
+re::Triangle& re::Mesh::AddTriangle()
 {
-	Triangle t(m_Owner);
-	t.SetVertices(vertices);
+	m_Triangles.push_back({});
+	return m_Triangles.back();
+}
 
-	auto& min = m_BoundingBox.Min;
-	auto& max = m_BoundingBox.Max;
-
-	for (auto &v : vertices)
+void re::Mesh::Compile()
+{
+	if (m_Invalidated)
 	{
-		min.X = std::min(min.X, v.X);
-		min.Y = std::min(min.Y, v.Y);
-		min.Z = std::min(min.Z, v.Z);
 
-		max.X = std::max(max.X, v.X);
-		max.Y = std::max(max.Y, v.Y);
-		max.Z = std::max(max.Z, v.Z);
+		auto& min = m_BoundingBox.Min;
+		auto& max = m_BoundingBox.Max;
+
+		for (auto &t : m_Triangles) {
+			t.Update();
+
+			for (auto &v : t.Vertices)
+			{
+				min.X = std::min(min.X, v.X);
+				min.Y = std::min(min.Y, v.Y);
+				min.Z = std::min(min.Z, v.Z);
+
+				max.X = std::max(max.X, v.X);
+				max.Y = std::max(max.Y, v.Y);
+				max.Z = std::max(max.Z, v.Z);
+			}
+
+		}
+
+		m_Invalidated = false;
+	}
+}
+
+void re::Mesh::Invalidate()
+{
+	m_Invalidated = true;
+}
+
+re::RayHitResult re::Mesh::IntersectTriangle(const Ray & ray, const Triangle & t) const
+{
+	RayHitResult result;
+	//Vector3 t0 = (Vertices[1] - Vertices[0]).Normalized();
+	//Vector3 t1 = (Vertices[2] - Vertices[0]).Normalized();
+
+	Vector3 l = ray.Origin - t.Vertices[0];
+	real distance = l ^ t.FaceNormal;
+
+	if (distance < 0)
+	{
+		// Ray origin "behind" the triangle plane
+		return result;
 	}
 
-	m_Triangles.push_back(t);
+	real cosine = ray.Direction ^ t.FaceNormal;
+
+	// Check if the ray is never intersecting the triangle plane
+	if (cosine >= 0)
+	{
+		return result;
+	}
+
+
+	// Project the ray on the triangle plane 
+	Vector3 projection = ray.Origin + ray.Direction * (distance / -cosine);
+
+	// "Inside-Outside" method
+
+	/*
+	if ((t.FaceNormal ^ (Cross(t.Edges[0], projection - t.Vertices[0]))) > 0 &&
+		(t.FaceNormal ^ (Cross(t.Edges[1], projection - t.Vertices[1]))) > 0 &&
+		(t.FaceNormal ^ (Cross(t.Edges[2], projection - t.Vertices[2]))) > 0)
+	{
+		result.Hit = true;
+		result.Point = projection;
+
+		if (NormalMode == NormalModes::Face)
+		{
+			result.Normal = t.FaceNormal;
+		}
+		else
+		{
+
+		}
+	}
+
+	*/
+
+	Vector3 bar = t.Baricentric(projection);
+
+	if (bar.X >= 0 && bar.Y >= 0 && bar.Z >= 0)
+	{
+		result.Hit = true;
+		result.Point = projection;
+		if (NormalMode == NormalModes::Face)
+		{
+			result.Normal = t.FaceNormal;
+		}
+		else
+		{
+			result.Normal = (t.Normals[0] * bar.X + t.Normals[1] * bar.Y + t.Normals[2] * bar.Z).Normalized();
+		}
+	}
+
+	return result;
+}
+
+re::Vector3 re::Triangle::Baricentric(const Vector3 & point) const
+{
+	real v, w, u;
+	Vector3 v2 = point - Vertices[0];
+	real d20 = v2 ^ Edges[0];
+	real d21 = v2 ^ Edges[1];
+	v = (m_D11 * d20 - m_D01 * d21) * m_InvDen;
+	w = (m_D00 * d21 - m_D01 * d20) * m_InvDen;
+	u = 1.0f - v - w;
+	return { u, v, w };
+}
+
+void re::Triangle::Update()
+{
+	const_cast<Vector3&>(FaceNormal) = Cross(Vertices[1] - Vertices[0], Vertices[2] - Vertices[1]).Normalized();
+	/*
+	const_cast<std::array<Vector3, 3>&>(Edges) = {
+		Vertices[1] - Vertices[0],
+		Vertices[2] - Vertices[1],
+		Vertices[0] - Vertices[2]
+	};
+	*/
+
+	const_cast<std::array<Vector3, 3>&>(Edges) = {
+		Vertices[1] - Vertices[0],
+		Vertices[2] - Vertices[0],
+		Vertices[2] - Vertices[1]
+	};
+
+	m_D00 = Edges[0] ^ Edges[0];
+	m_D01 = Edges[0] ^ Edges[1];
+	m_D11 = Edges[1] ^ Edges[1];
+
+	m_InvDen = 1.0 / (m_D00 * m_D11 - m_D01 * m_D01);
 }
