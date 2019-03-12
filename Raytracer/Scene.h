@@ -8,6 +8,7 @@
 
 namespace re
 {
+	class KDTreeTriangle;
 	class Shape;
 	class Scene;
 	class SceneNode;
@@ -93,8 +94,12 @@ namespace re
 			SceneNode * Node = nullptr;
 		};
 
-		Vector3 CameraPosition = Vector3::Zero;
-		Vector3 LookDirection = Vector3::Forward;
+		struct
+		{
+			Vector3 Position = Vector3::Zero;
+			Vector3 Direction = Vector3::Forward;
+		} Camera;
+
 		std::vector<Light*> Lights;
 		Background * Background = nullptr;
 
@@ -183,8 +188,8 @@ namespace re
 
 		std::array<Vector3, 3> Vertices, Normals;
 
-		const Vector3 FaceNormal;
-		const std::array<Vector3, 3> Edges;
+		Vector3 FaceNormal;
+		std::array<Vector3, 3> Edges;
 
 
 		Vector3 Baricentric(const Vector3& point) const;
@@ -216,6 +221,10 @@ namespace re
 		bool m_Invalidated = true;
 
 		RayHitResult IntersectTriangle(const Ray& ray, const Triangle& triangle) const;
+		void IntersectInternal(const Ray& ray, KDTreeTriangle * node, RayHitResult & result, real & distance) const;
+
+
+		KDTreeTriangle* m_KdTree = nullptr;
 
 		std::vector<Triangle> m_Triangles;
 		re::BoundingBox m_BoundingBox;

@@ -252,6 +252,11 @@ re::Vector3 re::operator/(const Vector3 & v, real t)
 	return Vector3(v.X / t, v.Y / t, v.Z / t);
 }
 
+re::Color::Color(const Vector3 & v)
+	: Color(v.X, v.Y, v.Z)
+{
+}
+
 re::Color::Color(real r, real g, real b) :
 	R(Clamp(r, (real)0.0f, (real)1.0f)),
 	G(Clamp(g, (real)0.0f, (real)1.0f)),
@@ -303,6 +308,38 @@ re::Color & re::Color::operator*=(real t)
 re::real re::Color::Luma() const
 {
 	return 0.299f * R + 0.587f * G + 0.114f * B;
+}
+
+void re::BoundingBox::Split(Axis axis, real value, BoundingBox & left, BoundingBox & right) const
+{
+	switch (axis)
+	{
+	case re::Axis::X:
+		left.Min = { Min.X, Min.Y, Min.Z };
+		left.Max = { value, Max.Y, Max.Z };
+		right.Min = { value, Min.Y, Min.Z };
+		right.Max = { Max.X, Max.Y, Max.Z };
+		break;
+	case re::Axis::Y:
+		left.Min = { Min.X, Min.Y, Min.Z };
+		left.Max = { Max.X, value, Max.Z };
+		right.Min = { Min.X, value, Min.Z };
+		right.Max = { Max.X, Max.Y, Max.Z };
+		break;
+	case re::Axis::Z:
+		left.Min = { Min.X, Min.Y, Min.Z };
+		left.Max = { Max.X, Max.Y, value };
+		right.Min = { Min.X, Min.Y, value };
+		right.Max = { Max.X, Max.Y, Max.Z };
+		break;
+	default:
+		break;
+	}
+}
+
+re::real re::BoundingBox::Surface() const
+{
+	return 2 * ((Max.X - Min.X) * (Max.Y - Min.Y) + (Max.X - Min.X) * (Max.Z - Min.Z) + (Max.Z - Min.Z) * (Max.Y - Min.Y));
 }
 
 re::RayHitResult re::BoundingBox::Intersect(const Ray & ray) const

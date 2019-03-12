@@ -22,6 +22,7 @@ re::AbstractRaycaster::~AbstractRaycaster()
 	delete[] m_Pixels;
 }
 
+
 void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 {
 	m_Status = { false, false, 0, m_Pixels };
@@ -84,14 +85,14 @@ re::Renderer::RenderStatus re::AbstractRaycaster::GetStatus()
 }
 
 
-re::Ray re::AbstractRaycaster::CreateScreenRay(Scene * m_Scene, real x, real y)
+re::Ray re::AbstractRaycaster::CreateScreenRay(Scene * scene, real x, real y)
 {
 	// GetSeed axis base
-	Vector3 forward = m_Scene->LookDirection.Normalized();
+	Vector3 forward = scene->Camera.Direction.Normalized();
 	Vector3 right = Cross(forward, Vector3::Up).Normalized();
 	Vector3 up = Cross(right, forward).Normalized();
 
-	real h2 = std::atan(m_FoVY);
+	real h2 = std::atan(m_FoVY / 2);
 	real w2 = h2 * (real)m_ViewWidth / (real)m_ViewHeight;
 
 	real xFactor = ((real)x / m_ViewWidth) * 2.0f - 1.0f;
@@ -99,7 +100,7 @@ re::Ray re::AbstractRaycaster::CreateScreenRay(Scene * m_Scene, real x, real y)
 
 	Ray result;
 
-	result.Origin = m_Scene->CameraPosition;
+	result.Origin = scene->Camera.Position;
 	result.Direction = (forward + right * xFactor * w2 + up * yFactor * h2).Normalized();
 
 	return result;
@@ -292,9 +293,9 @@ bool re::Raytracer::CastShadowRay(Scene * m_Scene, const Ray & shadowRay)
 	return result.Hit;
 }
 
-re::Color re::Raytracer::Raycast(Scene * m_Scene, const Ray & ray)
+re::Color re::Raytracer::Raycast(Scene * scene, const Ray & ray)
 {
-	return RecursiveRaytrace(m_Scene, ray, 0);
+	return RecursiveRaytrace(scene, ray, 0);
 }
 
 re::Color re::DebugRaycaster::Raycast(Scene * scene, const Ray & ray)

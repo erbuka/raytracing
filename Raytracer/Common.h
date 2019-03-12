@@ -50,6 +50,8 @@ namespace re
 		return first < result ? first : result;
 	}
 
+	enum class Axis : unsigned int { X = 0, Y = 1, Z = 2 };
+
 	union Vector2;
 	union Vector3;
 	union Vector4;
@@ -98,6 +100,7 @@ namespace re
 		Vector3& operator*=(real t);
 
 		Vector3 operator-() const;
+
 
 	};
 
@@ -161,6 +164,7 @@ namespace re
 
 		real R, G, B;
 		Color() : R(0), G(0), B(0) {}
+		Color(const Vector3& v);
 		Color(real r, real g, real b);
 		Color(unsigned int color);
 		unsigned int GetHexValue() const;
@@ -199,6 +203,10 @@ namespace re
 
 		BoundingBox() : Min(), Max() {}
 		BoundingBox(Vector3 min, Vector3 max) : Min(min), Max(max) {}
+
+		void Split(Axis axis, real value, BoundingBox& left, BoundingBox& right) const;
+
+		real Surface() const;
 
 		virtual RayHitResult Intersect(const Ray& ray) const;
 	};

@@ -34,7 +34,7 @@ namespace re
 
 	protected:
 
-		virtual Color Raycast(Scene * m_Scene, const Ray& ray) = 0;
+		virtual Color Raycast(Scene * scene, const Ray& ray) = 0;
 
 		Color *m_ColorBuffer0;
 
@@ -62,7 +62,7 @@ namespace re
 
 		unsigned int MaxRecursion = 3;
 
-		Raytracer(unsigned int viewWidth, unsigned int viewHeight, real fovY = PI / 6.0f) :
+		Raytracer(unsigned int viewWidth, unsigned int viewHeight, real fovY = PI / 4.0f) :
 			AbstractRaycaster(viewWidth, viewHeight, fovY) {}
 
 	protected:

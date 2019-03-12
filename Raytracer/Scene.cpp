@@ -1,6 +1,107 @@
 #include "Scene.h"
 #include <cassert>
 
+namespace re {
+	class KDTreeTriangle
+	{
+	public:
+
+		~KDTreeTriangle()
+		{
+			if (Left)
+				delete Left;
+
+			if (Right)
+				delete Right;
+		}
+
+		KDTreeTriangle(const std::vector<Triangle>& triangles, const BoundingBox& bounds, int depth) :
+			Bounds(bounds),
+			Depth(depth)
+		{
+
+
+			// Stop condition
+			if (triangles.size() <= 1 || Depth == 100)
+			{
+				for (auto &t : triangles)
+					Triangles.push_back(t);
+				return;
+			}
+
+
+			
+			// Select the split axis (round-robin)
+			unsigned int uAxis = depth % 3;
+
+
+			struct
+			{
+				BoundingBox LeftBounds, RightBounds;
+				std::vector<Triangle> LeftTris, RightTris;
+			} result;
+
+			// Take the median of all points as split point
+			real median = 0;
+
+			for (auto &t : triangles)
+			{
+				median += t.Vertices[0].Elements[uAxis];
+				median += t.Vertices[1].Elements[uAxis];
+				median += t.Vertices[2].Elements[uAxis];
+			}
+
+			median /= 3 * triangles.size();
+
+			Bounds.Split(static_cast<Axis>(uAxis), median, result.LeftBounds, result.RightBounds);
+
+			// Test every triangle in both left and right bounding boxes
+			for (auto& t : triangles)
+			{
+
+				if (t.Vertices[0].Elements[uAxis] <= median || t.Vertices[1].Elements[uAxis] <= median || t.Vertices[2].Elements[uAxis] <= median)
+				{
+					result.LeftTris.push_back(t);
+				}
+
+				if (t.Vertices[0].Elements[uAxis] >= median || t.Vertices[1].Elements[uAxis] >= median || t.Vertices[2].Elements[uAxis] >= median)
+				{
+					result.RightTris.push_back(t);
+				}
+			}
+
+
+			// Check that not too many triangles are in common (> 50%)
+			// between the subdivisions 
+			if (result.LeftTris.size() + result.RightTris.size() > 1.5 * triangles.size())
+			{
+				// If so, subdiving is not efficent anymore
+				for (auto &t : triangles)
+					Triangles.push_back(t);
+
+			}
+			else
+			{
+				// Subidivide
+
+				if (result.LeftTris.size() > 0)
+					Left = new KDTreeTriangle(result.LeftTris, result.LeftBounds, depth + 1);
+
+				if (result.RightTris.size() > 0)
+					Right = new KDTreeTriangle(result.RightTris, result.RightBounds, depth + 1);
+			}
+
+			
+		}
+
+		const unsigned int Depth;
+		const BoundingBox Bounds;
+		KDTreeTriangle *Left = nullptr, *Right = nullptr;
+		std::vector<Triangle> Triangles;
+
+	};
+}
+
 re::SkyBox::SkyBox(Color color0, Color color1, Light * sun)
 	: m_SkyColor0(color0), m_SkyColor1(color1), m_Sun(sun)
 {
@@ -99,9 +200,9 @@ re::Scene::RaycastResult re::Scene::CastRayRecursive(const Ray & ray, SceneNode 
 			// Calculate point in world coordinates
 			Vector3 worldPoint = tmat * Vector4(result.Point, 1);
 
-			real distance = (ray.Origin - worldPoint).Length();
+			real distance = (ray.Origin - worldPoint).SquaredLength();
 
-			if (distance >= std::numeric_limits<float>::epsilon())
+			if (distance >= std::numeric_limits<real>::epsilon())
 			{
 				raycastResult.Hit = true;
 				raycastResult.Point = worldPoint;
@@ -294,6 +395,7 @@ re::Shape::Shape(SceneNode * owner) : Component(owner)
 
 re::RayHitResult re::Mesh::Intersect(const Ray & ray)
 {
+	/*
 	RayHitResult result;
 	
 	// Check against the mesh bounding box first
@@ -318,6 +420,13 @@ re::RayHitResult re::Mesh::Intersect(const Ray & ray)
 	}
 
 	return result;
+	*/
+	
+	RayHitResult result;
+	real distance = std::numeric_limits<real>::max();
+	IntersectInternal(ray, m_KdTree, result, distance);
+	return result;
+	
 }
 
 re::Triangle& re::Mesh::AddTriangle()
@@ -349,6 +458,8 @@ void re::Mesh::Compile()
 			}
 
 		}
+
+		m_KdTree = new KDTreeTriangle(m_Triangles, m_BoundingBox, 0);
 
 		m_Invalidated = false;
 	}
@@ -386,28 +497,8 @@ re::RayHitResult re::Mesh::IntersectTriangle(const Ray & ray, const Triangle & t
 	// Project the ray on the triangle plane 
 	Vector3 projection = ray.Origin + ray.Direction * (distance / -cosine);
 
-	// "Inside-Outside" method
-
-	/*
-	if ((t.FaceNormal ^ (Cross(t.Edges[0], projection - t.Vertices[0]))) > 0 &&
-		(t.FaceNormal ^ (Cross(t.Edges[1], projection - t.Vertices[1]))) > 0 &&
-		(t.FaceNormal ^ (Cross(t.Edges[2], projection - t.Vertices[2]))) > 0)
-	{
-		result.Hit = true;
-		result.Point = projection;
-
-		if (NormalMode == NormalModes::Face)
-		{
-			result.Normal = t.FaceNormal;
-		}
-		else
-		{
-
-		}
-	}
-
-	*/
-
+	// Use baricentric coordinates to check if the ray projection
+	// is contained in the triangle
 	Vector3 bar = t.Baricentric(projection);
 
 	if (bar.X >= 0 && bar.Y >= 0 && bar.Z >= 0)
@@ -427,8 +518,35 @@ re::RayHitResult re::Mesh::IntersectTriangle(const Ray & ray, const Triangle & t
 	return result;
 }
 
+void re::Mesh::IntersectInternal(const Ray& ray, KDTreeTriangle * node, RayHitResult & result, real & distance) const
+{
+	if (node->Bounds.Intersect(ray).Hit)
+	{
+		for (auto & t : node->Triangles)
+		{
+			auto r = IntersectTriangle(ray, t);
+			auto d = (ray.Origin - r.Point).SquaredLength();
+
+			if (d < distance && r.Hit)
+			{
+				result = r;
+				distance = d;
+			}
+		}
+
+		if (node->Left)
+			IntersectInternal(ray, node->Left, result, distance);
+
+		if (node->Right)
+			IntersectInternal(ray, node->Right, result, distance);
+
+	}
+}
+
 re::Vector3 re::Triangle::Baricentric(const Vector3 & point) const
 {
+	// Fast baricentric coordinates:
+	// https://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates
 	real v, w, u;
 	Vector3 v2 = point - Vertices[0];
 	real d20 = v2 ^ Edges[0];
@@ -442,14 +560,6 @@ re::Vector3 re::Triangle::Baricentric(const Vector3 & point) const
 void re::Triangle::Update()
 {
 	const_cast<Vector3&>(FaceNormal) = Cross(Vertices[1] - Vertices[0], Vertices[2] - Vertices[1]).Normalized();
-	/*
-	const_cast<std::array<Vector3, 3>&>(Edges) = {
-		Vertices[1] - Vertices[0],
-		Vertices[2] - Vertices[1],
-		Vertices[0] - Vertices[2]
-	};
-	*/
-
 	const_cast<std::array<Vector3, 3>&>(Edges) = {
 		Vertices[1] - Vertices[0],
 		Vertices[2] - Vertices[0],

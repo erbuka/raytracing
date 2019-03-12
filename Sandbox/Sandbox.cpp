@@ -208,10 +208,6 @@ void sb::Sandbox::InitGL()
 	glBindTexture(GL_TEXTURE_2D, m_Texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, 1, 0, 1, -1, 1);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -228,7 +224,7 @@ void sb::Sandbox::Update(float dt)
 
 	if (m_Raytracer->GetStatus().Finished)
 	{
-		m_Scene->LookDirection = re::Vector3{
+		m_Scene->Camera.Direction = re::Vector3{
 			std::cos(m_CameraDir.Beta) * std::cos(m_CameraDir.Alpha),
 			std::sin(m_CameraDir.Beta),
 			std::cos(m_CameraDir.Beta) * std::sin(m_CameraDir.Alpha)
@@ -256,27 +252,27 @@ void sb::Sandbox::Update(float dt)
 		m_Scene->Background = m_SkyBoxes[Settings.Sky].get();
 	}
 
-	auto right = re::Cross(m_Scene->LookDirection, re::Vector3::Up);
+	auto right = re::Cross(m_Scene->Camera.Direction, re::Vector3::Up);
 
 	if (isKeyDown(GLFW_KEY_W))
 	{
-		m_Scene->CameraPosition = m_Scene->CameraPosition + m_Scene->LookDirection * MoveSpeed * dt;
+		m_Scene->Camera.Position = m_Scene->Camera.Position + m_Scene->Camera.Direction * MoveSpeed * dt;
 		m_SceneDirty = true;
 	}
 	else if (isKeyDown(GLFW_KEY_S))
 	{
-		m_Scene->CameraPosition = m_Scene->CameraPosition - m_Scene->LookDirection * MoveSpeed * dt;
+		m_Scene->Camera.Position = m_Scene->Camera.Position - m_Scene->Camera.Direction * MoveSpeed * dt;
 		m_SceneDirty = true;
 	}
 
 	if (isKeyDown(GLFW_KEY_D))
 	{
-		m_Scene->CameraPosition = m_Scene->CameraPosition + right * MoveSpeed * dt;
+		m_Scene->Camera.Position = m_Scene->Camera.Position + right * MoveSpeed * dt;
 		m_SceneDirty = true;
 	}
 	else if (isKeyDown(GLFW_KEY_A))
 	{
-		m_Scene->CameraPosition = m_Scene->CameraPosition - right * MoveSpeed * dt;
+		m_Scene->Camera.Position = m_Scene->Camera.Position - right * MoveSpeed * dt;
 		m_SceneDirty = true;
 	}
 
@@ -311,12 +307,18 @@ void sb::Sandbox::Render(float dt)
 
 	auto status = m_Raytracer->GetStatus();
 	/* Scene */
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, 1, 0, 1, -1, 1);
+
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glBindTexture(GL_TEXTURE_2D, m_ValidRender ? m_Texture : m_FastTexture);
 
 	glBegin(GL_QUADS);
 	{
+		glColor3f(1, 1, 1);
 		glTexCoord2f(0, 1); glVertex3f(0, 0, 0);
 		glTexCoord2f(1, 1); glVertex3f(1, 0, 0);
 		glTexCoord2f(1, 0);	glVertex3f(1, 1, 0);
@@ -343,8 +345,8 @@ void sb::Sandbox::Render(float dt)
 
 			if (ImGui::CollapsingHeader("Info", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				float cameraPos[3] = { m_Scene->CameraPosition.X, m_Scene->CameraPosition.Y, m_Scene->CameraPosition.Z };
-				float lookDir[3] = { m_Scene->LookDirection.X, m_Scene->LookDirection.Y, m_Scene->LookDirection.Z };
+				float cameraPos[3] = { m_Scene->Camera.Position.X, m_Scene->Camera.Position.Y, m_Scene->Camera.Position.Z };
+				float lookDir[3] = { m_Scene->Camera.Direction.X, m_Scene->Camera.Direction.Y, m_Scene->Camera.Direction.Z };
 
 				ImGui::InputFloat3("Camera position", cameraPos, 3, ImGuiInputTextFlags_ReadOnly);
 				ImGui::InputFloat3("Look direction", lookDir, 3, ImGuiInputTextFlags_ReadOnly);
@@ -375,6 +377,8 @@ void sb::Sandbox::Render(float dt)
 			ImGui::End();
 
 		}
+
+
 		ImGui::Render();
 
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -415,6 +419,8 @@ void sb::Sandbox::InitMaterials()
 	m_Materials.insert({ "glass_black", std::shared_ptr<re::Material>(new re::UniformMaterial(0x000000, 0.8f)) });
 	m_Materials.insert({ "glass_white", std::shared_ptr<re::Material>(new re::UniformMaterial(0xffffff, 0.4f)) });
 	m_Materials.insert({ "mirror", std::shared_ptr<re::Material>(new re::UniformMaterial(0xffffff, 0.0f)) });
+	m_Materials.insert({ "solid_black", std::shared_ptr<re::Material>(new re::UniformMaterial(0, 1.0f)) });
+	m_Materials.insert({ "marble", std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::Marble(5, 32)), m_Materials["solid_black"], m_Materials["mirror"])) });
 
 	m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::CheckerBoard(16.0f)), m_Materials["glass_black"], m_Materials["glass_white"])));
 	m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::Marble(64, 32)), m_Materials["glass_black"], m_Materials["glass_white"])));
@@ -442,7 +448,7 @@ void sb::Sandbox::InitScene()
 	*/
 
 
-	m_Scene->CameraPosition = { 0, 3, 20 };
+	m_Scene->Camera.Position = { 0, 3, 20 };
 	m_CameraDir.Alpha = -re::PI/2;
 	m_CameraDir.Beta = 0;
 
@@ -516,32 +522,28 @@ void sb::Sandbox::InitScene()
 		m_Ground->Material = nullptr;
 	}
 
-	// Debug
-
-	
 	{
-		auto wf = sb::LoadWavefront("res/bunny.obj_");
+
+		auto wfData = LoadWavefront("res/bunny.obj_");
+
 		auto meshNode = m_Scene->GetRoot()->AddChild();
 		auto mesh = meshNode->AddComponent<re::Mesh>();
 
-		meshNode->GetComponentOfType<re::Transform>()->Position.Z = -3;
-		meshNode->GetComponentOfType<re::Transform>()->Position.Y = 0;
-		meshNode->GetComponentOfType<re::Transform>()->Scale = { 2, 2, 2 };
+		meshNode->GetComponentOfType<re::Transform>()->Position = { CSphereDistance, -1, -2 * CSphereDistance };
+		meshNode->GetComponentOfType<re::Transform>()->Scale = { 5, 5, 5 };
 
-
-		for (auto f : wf["bunny"])
+		for (auto f : wfData["bunny"])
 		{
 			auto& t = mesh->AddTriangle();
 			t.Vertices = { f.Vertices[0], f.Vertices[1], f.Vertices[2] };
 			t.Normals = { f.Normals[0], f.Normals[1], f.Normals[2] };
 		}
-
-		mesh->NormalMode = re::NormalModes::Vertex;
-
-		mesh->Material = m_Materials["red"].get();
 		
+		mesh->NormalMode = re::NormalModes::Vertex;
+		mesh->Material = m_Materials["marble"].get();
+		
+	
 	}
-
 
 }
 
