@@ -89,7 +89,7 @@ namespace sb
 
 		std::pair<re::real, re::real> m_PrevDragPos, m_CurrDragPos;
 
-		struct {
+		struct CameraDir {
 			float Alpha = -re::PI / 2;
 			float Beta = 0;
 		} m_CameraDir;

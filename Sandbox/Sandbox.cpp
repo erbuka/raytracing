@@ -10,24 +10,6 @@
 
 #include <tinyxml2.h>
 
-/*
-m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::CheckerBoard(16.0f)), m_Materials["glass_black"], m_Materials["glass_white"])));
-m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::Marble(64, 32)), m_Materials["glass_black"], m_Materials["glass_white"])));
-m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::Worley(64, 32)), m_Materials["glass_black"], m_Materials["glass_white"])));
-
-m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x4444ff, 0xffffff, m_DirectionalLights[0].get())));
-
-	m_SpheresMaterials.push_back(m_Materials["red"]);
-	m_SpheresMaterials.push_back(m_Materials["green"]);
-	m_SpheresMaterials.push_back(m_Materials["blue"]);
-	m_SpheresMaterials.push_back(CreateMarble(m_Materials["dark_red"], m_Materials["red"]));
-	m_SpheresMaterials.push_back(CreateMarble(m_Materials["dark_green"], m_Materials["green"]));
-	m_SpheresMaterials.push_back(CreateMarble(m_Materials["dark_blue"], m_Materials["blue"]));
-	m_SpheresMaterials.push_back(CreateWorley(m_Materials["red"], m_Materials["mirror"]));
-	m_SpheresMaterials.push_back(CreateWorley(m_Materials["green"], m_Materials["mirror"]));
-	m_SpheresMaterials.push_back(CreateWorley(m_Materials["blue"], m_Materials["mirror"]));
-
-*/
 
 static std::string SAVED_SCENES_FILE = "res/scenes.xml";
 
@@ -543,7 +525,7 @@ void sb::Sandbox::Render(float dt)
 					}
 
 					ImGui::InputTextMultiline("Code", m_CurrentSceneCode, sizeof(m_CurrentSceneCode), { -1, -ImGui::GetFrameHeightWithSpacing() });
-					if (ImGui::Button("Update Scene"))
+					if (ImGui::Button("Run Code"))
 					{
 						UpdateScene();
 					}
@@ -592,90 +574,6 @@ std::pair<re::real, re::real> sb::Sandbox::GetWindowSize()
 	glfwGetWindowSize(m_Window, &x, &y);
 	return { static_cast<re::real>(x), static_cast<re::real>(y) };
 }
-/*
-
-void sb::Sandbox::InitMaterials()
-{
-	m_Materials.insert({ "red", std::shared_ptr<re::Material>(new re::UniformMaterial(0xf44336, 0.6f)) });
-	m_Materials.insert({ "green", std::shared_ptr<re::Material>(new re::UniformMaterial(0x4CAF50, 0.6f)) });
-	m_Materials.insert({ "blue", std::shared_ptr<re::Material>(new re::UniformMaterial(0x2196F3, 0.6f)) });
-	m_Materials.insert({ "dark_red", std::shared_ptr<re::Material>(new re::UniformMaterial(0x8d1007, 0.9f)) });
-	m_Materials.insert({ "dark_green", std::shared_ptr<re::Material>(new re::UniformMaterial(0x265728, 0.9f)) });
-	m_Materials.insert({ "dark_blue", std::shared_ptr<re::Material>(new re::UniformMaterial(0x074b83, 0.9f)) });
-	m_Materials.insert({ "glass_black", std::shared_ptr<re::Material>(new re::UniformMaterial(0x000000, 0.8f)) });
-	m_Materials.insert({ "glass_white", std::shared_ptr<re::Material>(new re::UniformMaterial(0xffffff, 0.4f)) });
-	m_Materials.insert({ "mirror", std::shared_ptr<re::Material>(new re::UniformMaterial(0xffffff, 0.0f)) });
-	m_Materials.insert({ "solid_black", std::shared_ptr<re::Material>(new re::UniformMaterial(0, 1.0f)) });
-	m_Materials.insert({ "marble", std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::Marble(5, 32)), m_Materials["solid_black"], m_Materials["mirror"])) });
-
-	m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::CheckerBoard(16.0f)), m_Materials["glass_black"], m_Materials["glass_white"])));
-	m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::Marble(64, 32)), m_Materials["glass_black"], m_Materials["glass_white"])));
-	m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::Worley(64, 32)), m_Materials["glass_black"], m_Materials["glass_white"])));
-
-	m_SpheresMaterials.push_back(m_Materials["red"]);
-	m_SpheresMaterials.push_back(m_Materials["green"]);
-	m_SpheresMaterials.push_back(m_Materials["blue"]);
-	m_SpheresMaterials.push_back(CreateMarble(m_Materials["dark_red"], m_Materials["red"]));
-	m_SpheresMaterials.push_back(CreateMarble(m_Materials["dark_green"], m_Materials["green"]));
-	m_SpheresMaterials.push_back(CreateMarble(m_Materials["dark_blue"], m_Materials["blue"]));
-	m_SpheresMaterials.push_back(CreateWorley(m_Materials["red"], m_Materials["mirror"]));
-	m_SpheresMaterials.push_back(CreateWorley(m_Materials["green"], m_Materials["mirror"]));
-	m_SpheresMaterials.push_back(CreateWorley(m_Materials["blue"], m_Materials["mirror"]));
-}
-	*/
-
-/*
-void sb::Sandbox::InitScene()
-{
-	m_Scene = std::shared_ptr<re::Scene>(new re::Scene());
-
-	
-	m_Scene->CameraPosition = { -2.88, 7.86, -4.26 };
-	m_CameraDir.Alpha = 0.9;
-	m_CameraDir.Beta = -0.8;
-	
-
-
-	m_Scene->Camera.Position = { 0, 3, 20 };
-	m_CameraDir.Alpha = -re::PI/2;
-	m_CameraDir.Beta = 0;
-
-	static auto makeDirectionalLight = [](re::Color color, re::Vector3 direction)
-	{
-		re::Light * directional = new re::Light();
-		directional->Color = color;
-		directional->Direction = direction.Normalized();
-		directional->Type = re::LightType::Directional;
-		return directional;
-	};
-
-
-	static auto makeAmbientLight = [](re::Color color)
-	{
-		re::Light * ambient = new re::Light();
-		ambient->Color = color;
-		ambient->Type = re::LightType::Ambient;
-		return ambient;
-	};
-
-
-	{
-	
-		m_AmbientLights.push_back(std::shared_ptr<re::Light>(makeAmbientLight(0)));
-		m_AmbientLights.push_back(std::shared_ptr<re::Light>(makeAmbientLight(0)));
-
-		m_DirectionalLights.push_back(std::shared_ptr<re::Light>(makeDirectionalLight(0xffddee, { 1, 1, -1 })));
-		m_DirectionalLights.push_back(std::shared_ptr<re::Light>(makeDirectionalLight(0x353532, { 1, 1, -1 })));
-
-		//m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x009CE5FF, 0x00C3FAFF, m_DirectionalLights[0].get())));
-		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x4444ff, 0xffffff, m_DirectionalLights[0].get())));
-		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x000033, 0x444444, m_DirectionalLights[1].get())));
-		
-
-	}
-
-}
-*/
 
 void sb::Sandbox::UpdateScene()
 {
@@ -683,10 +581,9 @@ void sb::Sandbox::UpdateScene()
 
 	try
 	{
-		// Copy the camera
-		auto camera = m_Scene->Camera;
 		m_Scene = std::make_shared<re::Scene>();
-		m_Scene->Camera = camera;
+
+		m_CameraDir = CameraDir();
 
 		m_Noises.clear();
 		m_Materials.clear();
@@ -826,10 +723,6 @@ void sb::Sandbox::UpdateScene()
 		// Camera control
 		state.set("reCameraPos", [&](re::real x, re::real y, re::real z) -> void {
 			m_Scene->Camera.Position = { x,y,z };
-		});
-
-		state.set("reCameraLookAt", [&](re::real dx, re::real dy, re::real dz) -> void {
-			m_Scene->Camera.Direction = { dx,dy,dz };
 		});
 
 		// Background
