@@ -694,30 +694,43 @@ void sb::Sandbox::UpdateScene()
 
 
 		// Lights
-		state.set("reAmbientLight", [&](int color) -> void {
-			auto light = new re::Light();
+		state.set("reAmbientLight", [&](int color) -> int {
+			auto light = std::make_shared<re::Light>();
+			
 			light->Type = re::LightType::Ambient;
 			light->Color = color;
+
 			m_Scene->Lights.push_back(light);
+			m_Lights.push_back(light);
+			
+			return m_Lights.size() - 1;
 		});
 
-		state.set("reDirectionalLight", [&](int color, re::real nx, re::real ny, re::real nz) -> void* {
-			auto light = new re::Light();
+		state.set("reDirectionalLight", [&](int color, re::real nx, re::real ny, re::real nz) -> int {
+			auto light = std::make_shared<re::Light>();
+			
 			light->Type = re::LightType::Directional;
 			light->Color = color;
 			light->Direction = re::Vector3(nx,ny,nz).Normalized();
+			
 			m_Scene->Lights.push_back(light);
-			return light;
+			m_Lights.push_back(light);
+
+			return m_Lights.size() - 1;
 		});
 
-		state.set("rePointLight", [&](int color, re::real attenuation) -> void* {
-			auto light = new re::Light();
+		state.set("rePointLight", [&](int color, re::real attenuation) -> int {
+			auto light = std::make_shared<re::Light>();
+
 			light->Type = re::LightType::Point;
 			light->Color = color;
 			light->Position = position;
 			light->Attenuation = attenuation;
+
 			m_Scene->Lights.push_back(light);
-			return light;
+			m_Lights.push_back(light);
+
+			return m_Lights.size() - 1;
 		});
 
 		// Camera control
@@ -726,13 +739,12 @@ void sb::Sandbox::UpdateScene()
 		});
 
 		// Background
-		state.set("reSkyBox", [&](int color0, int color1, void* light) -> void {
-			if (m_Scene->Background)
-			{
-				delete m_Scene->Background;
-			}
+		state.set("reSkyBox", [&](int color0, int color1, int light) -> void {
 
-			m_Scene->Background = new re::SkyBox(color0, color1, static_cast<re::Light*>(light));
+			CheckSize(m_Lights, light, "Invalid light: %d", light);
+
+
+			m_Scene->Background = std::shared_ptr<re::Background>(new re::SkyBox(color0, color1, m_Lights[light]));
 
 		});
 

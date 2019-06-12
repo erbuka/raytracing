@@ -102,7 +102,7 @@ namespace re {
 	};
 }
 
-re::SkyBox::SkyBox(Color color0, Color color1, Light * sun)
+re::SkyBox::SkyBox(Color color0, Color color1, std::shared_ptr<Light> sun)
 	: m_SkyColor0(color0), m_SkyColor1(color1), m_Sun(sun)
 {
 	m_Perlin = std::make_shared<Perlin>(1);

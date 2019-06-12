@@ -74,6 +74,7 @@ namespace sb
 		std::shared_ptr<re::DebugRaycaster> m_Raycaster;
 		std::vector<std::shared_ptr<re::Material>> m_Materials;
 		std::vector<std::shared_ptr<re::Noise>> m_Noises;
+		std::vector<std::shared_ptr<re::Light>> m_Lights;
 
 
 		

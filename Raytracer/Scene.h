@@ -43,7 +43,7 @@ namespace re
 	class SkyBox : public Background
 	{
 	public:
-		SkyBox(Color color0, Color color1, Light* sun = nullptr);
+		SkyBox(Color color0, Color color1, std::shared_ptr<Light> sun);
 
 		virtual Color GetColor(const Vector3& direction) const override;
 
@@ -52,7 +52,8 @@ namespace re
 	private:
 		std::shared_ptr<Perlin> m_Perlin;
 		Color m_SkyColor0, m_SkyColor1;
-		Light* m_Sun;
+		
+		std::shared_ptr<Light> m_Sun;
 	};
 
 	class Scene
@@ -75,8 +76,8 @@ namespace re
 			void LookAt(const Vector3& target) { Direction = (target - Position).Normalized(); }
 		} Camera;
 
-		std::vector<Light*> Lights;
-		Background * Background = nullptr;
+		std::vector<std::shared_ptr<Light>> Lights;
+		std::shared_ptr<Background> Background = nullptr;
 
 		Scene();
 		~Scene();
