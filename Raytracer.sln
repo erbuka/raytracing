@@ -7,7 +7,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Glad", "vendor\glad\Glad.vc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImGui", "vendor\imgui\ImGui.vcxproj", "{C0FF640D-2C14-8DBE-F595-301E616989EF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lua", "vendor\lua\Lua.vcxproj", "{A705880B-130F-887C-9C8A-9E7C0893937C}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Raytracer", "Raytracer\Raytracer.vcxproj", "{32530D40-9EBD-C1B6-E7FB-725C53A59F0B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TinyXML2", "vendor\tinyxml2\TinyXML2.vcxproj", "{0CAC469D-F878-A1A8-2192-8F500DBED636}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,10 +31,18 @@ Global
 		{C0FF640D-2C14-8DBE-F595-301E616989EF}.Debug|x64.Build.0 = Debug|x64
 		{C0FF640D-2C14-8DBE-F595-301E616989EF}.Release|x64.ActiveCfg = Release|x64
 		{C0FF640D-2C14-8DBE-F595-301E616989EF}.Release|x64.Build.0 = Release|x64
+		{A705880B-130F-887C-9C8A-9E7C0893937C}.Debug|x64.ActiveCfg = Debug|x64
+		{A705880B-130F-887C-9C8A-9E7C0893937C}.Debug|x64.Build.0 = Debug|x64
+		{A705880B-130F-887C-9C8A-9E7C0893937C}.Release|x64.ActiveCfg = Release|x64
+		{A705880B-130F-887C-9C8A-9E7C0893937C}.Release|x64.Build.0 = Release|x64
 		{32530D40-9EBD-C1B6-E7FB-725C53A59F0B}.Debug|x64.ActiveCfg = Debug|x64
 		{32530D40-9EBD-C1B6-E7FB-725C53A59F0B}.Debug|x64.Build.0 = Debug|x64
 		{32530D40-9EBD-C1B6-E7FB-725C53A59F0B}.Release|x64.ActiveCfg = Release|x64
 		{32530D40-9EBD-C1B6-E7FB-725C53A59F0B}.Release|x64.Build.0 = Release|x64
+		{0CAC469D-F878-A1A8-2192-8F500DBED636}.Debug|x64.ActiveCfg = Debug|x64
+		{0CAC469D-F878-A1A8-2192-8F500DBED636}.Debug|x64.Build.0 = Debug|x64
+		{0CAC469D-F878-A1A8-2192-8F500DBED636}.Release|x64.ActiveCfg = Release|x64
+		{0CAC469D-F878-A1A8-2192-8F500DBED636}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

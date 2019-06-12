@@ -204,11 +204,13 @@ re::Scene::RaycastResult re::Scene::CastRayRecursive(const Ray & ray, SceneNode 
 
 			if (distance >= std::numeric_limits<real>::epsilon())
 			{
+				Matrix4 tnorm;
+				transform->GetNormalTransform(tnorm);
+
 				raycastResult.Hit = true;
 				raycastResult.Point = worldPoint;
 				raycastResult.LocalPoint = result.Point;
-				// Calculate normal in world coordinates
-				raycastResult.Normal = Vector3(tmat * Vector4(result.Normal, 0)).Normalized();
+				raycastResult.Normal = Vector3(tnorm * Vector4(result.Normal, 0)).Normalized();
 				raycastResult.Node = currentNode;
 				hitDistance = distance;
 			}
@@ -263,6 +265,7 @@ void re::Transform::Compile()
 
 	m_Transform = prev * t * r * s;
 	m_InverseTransform = is * ir * it * prevInverse;
+	m_NormalTransform = m_InverseTransform.Transpose();
 }
 
 re::SceneNode::SceneNode()
@@ -377,14 +380,6 @@ re::RayHitResult re::Plane::Intersect(const Ray & ray)
 	return result;
 }
 
-
-unsigned int * re::Renderer::RenderSync(Scene * scene)
-{
-	std::promise<RenderStatus> p;
-	auto f = p.get_future();
-	Render(scene, std::move(p));
-	return f.get().Pixels;
-}
 
 re::Shape::Shape(SceneNode * owner) : Component(owner)
 {

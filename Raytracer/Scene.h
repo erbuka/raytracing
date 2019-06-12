@@ -13,9 +13,11 @@ namespace re
 	class Scene;
 	class SceneNode;
 
+	/// Light types
 	enum class LightType { Directional, Ambient, Point };
 	enum class NormalModes { Face, Vertex };
 
+	/// Class representing a light
 	class Light
 	{
 	public:
@@ -31,34 +33,6 @@ namespace re
 
 	};
 
-	class Renderer
-	{
-	public:
-
-		struct RenderStatus {
-			bool Finished;
-			bool Interruped;
-			float Percent;
-			unsigned int * Pixels;
-		};
-
-		Renderer(size_t viewWidth, size_t viewHeight, real fovY = PI / 6) :
-			m_ViewWidth(viewWidth), m_ViewHeight(viewHeight), m_FoVY(fovY) {}
-		
-		virtual ~Renderer() { }
-
-		virtual unsigned int * RenderSync(Scene * scene);
-		virtual void Render(Scene * scene, std::promise<RenderStatus> promise) = 0;
-		virtual RenderStatus GetStatus() = 0;
-		virtual void Interrupt() = 0;
-
-		virtual size_t GetViewWidth() { return m_ViewWidth; }
-		virtual size_t GetViewHeight() { return m_ViewHeight; }
-
-	protected:
-		size_t m_ViewWidth, m_ViewHeight;
-		real m_FoVY;
-	};
 
 	class Background
 	{
@@ -97,7 +71,8 @@ namespace re
 		struct
 		{
 			Vector3 Position = Vector3::Zero;
-			Vector3 Direction = Vector3::Forward;
+			Vector3 Direction = { 0,0,-1 };
+			void LookAt(const Vector3& target) { Direction = (target - Position).Normalized(); }
 		} Camera;
 
 		std::vector<Light*> Lights;
@@ -138,9 +113,10 @@ namespace re
 
 		void GetTransform(Matrix4& result) { result = m_Transform; }
 		void GetInverseTransform(Matrix4& result) { result = m_InverseTransform; }
+		void GetNormalTransform(Matrix4& result) { result = m_NormalTransform; }
 
 	private:
-		Matrix4 m_Transform, m_InverseTransform;
+		Matrix4 m_Transform, m_InverseTransform, m_NormalTransform;
 	};
 
 	class Shape : public Component

@@ -9,6 +9,14 @@
 #include <future>
 #include <array>
 
+unsigned int * re::Renderer::RenderSync(Scene * scene)
+{
+	std::promise<RenderStatus> p;
+	auto f = p.get_future();
+	Render(scene, std::move(p));
+	return f.get().Pixels;
+}
+
 re::AbstractRaycaster::AbstractRaycaster(unsigned int viewWidth, unsigned int viewHeight, real fovY) :
 	Renderer::Renderer(viewWidth, viewHeight, fovY)
 {
@@ -27,9 +35,17 @@ void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 {
 	m_Status = { false, false, 0, m_Pixels };
 
+	// We create a main thread that runs the rendering process
 	auto threadFunc = [scene, this](std::promise<RenderStatus> p) {
+		
+		// Start by compiling there scene (fast operation)
 
 		std::vector<std::function<void()>> functions;
+
+		// We subdivide the viewport in vertical scanlines (1 pixel wide)
+		// "NumThreads" threads are created. Eachone will process a scanline
+		// at time and the query for a new scanline. A mutex is used to access
+		// the available scanlines (see function DoRayTracethread)
 
 		scene->Compile();
 
@@ -54,6 +70,7 @@ void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 			futures.push_back(std::async(std::launch::async, func));
 		}
 
+		// Wait for all threads to complete their execution
 		for (auto &f : futures)
 		{
 			f.wait();
@@ -70,6 +87,8 @@ void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 	};
 
 	std::thread th(threadFunc, std::move(p));
+	
+	// Thread must be detached otherwise is will get destroyed at the end of the scope
 	th.detach();
 
 }
@@ -109,7 +128,8 @@ re::Ray re::AbstractRaycaster::CreateScreenRay(Scene * scene, real x, real y)
 void re::AbstractRaycaster::DoRaytraceThread(Scene * m_Scene, unsigned int minX, unsigned int maxX)
 {
 	unsigned int x;
-
+	// The "NextRenderSlice" function gives us the scanline we have to render in this thread. Uses a mutex since
+	// the threads are racing for scanlines
 	while(NextRenderSlice(x))
 	{
 		for (int y = 0; y < m_ViewHeight; y++)
@@ -131,9 +151,10 @@ void re::AbstractRaycaster::DoRaytraceThread(Scene * m_Scene, unsigned int minX,
 				Ray ray = CreateScreenRay(m_Scene, x, y);
 				m_ColorBuffer0[y * m_ViewWidth + x] = Raycast(m_Scene, ray);
 			}
-
+			// Update the current status
 			m_Status.Percent += 1.0f / (m_ViewWidth * m_ViewHeight);
 
+			// If the process has been interrupted, just return and and this thread
 			if (m_Status.Interruped)
 				return;
 

@@ -11,6 +11,47 @@ namespace re
 	class Shape;
 	class Material;
 
+	/// A generic 3D renderer. By default the rendering process is asynchronous and
+	/// should be performed with multiple threads
+	class Renderer
+	{
+	public:
+
+		/// Structure that represents the renderer status
+		struct RenderStatus {
+			bool Finished;
+			bool Interruped;
+			float Percent;
+			unsigned int * Pixels;
+		};
+
+		Renderer(size_t viewWidth, size_t viewHeight, real fovY = PI / 4) :
+			m_ViewWidth(viewWidth), m_ViewHeight(viewHeight), m_FoVY(fovY) {}
+
+		virtual ~Renderer() { }
+		
+		/// Renders the scene in synchronous mode and returns a pixel buffer containing the renderered scene
+		virtual unsigned int * RenderSync(Scene * scene);
+
+		/// Renders the scene
+		virtual void Render(Scene * scene, std::promise<RenderStatus> promise) = 0;
+
+		/// Returns the current status
+		virtual RenderStatus GetStatus() = 0;
+
+		/// Interrupts the rendering process
+		virtual void Interrupt() = 0;
+
+		virtual size_t GetViewWidth() { return m_ViewWidth; }
+		virtual size_t GetViewHeight() { return m_ViewHeight; }
+
+	protected:
+		size_t m_ViewWidth, m_ViewHeight;
+		real m_FoVY;
+	};
+
+	/// A multitrheaded raycaster that renders the scene casting rays from the camera to the viewport.
+	/// Subclasses must implement the Raycast function
 	class AbstractRaycaster : public Renderer
 	{
 	public:
@@ -21,7 +62,7 @@ namespace re
 			SSAA = 1
 		};
 
-		AbstractRaycaster(unsigned int viewWidth, unsigned int viewHeight, real fovY = PI / 6.0f);
+		AbstractRaycaster(unsigned int viewWidth, unsigned int viewHeight, real fovY = PI / 4.0f);
 		~AbstractRaycaster();
 
 		virtual void Render(Scene * scene, std::promise<RenderStatus> p) override;
@@ -55,7 +96,7 @@ namespace re
 
 
 	};
-
+	/// Raytracer implementation
 	class Raytracer : public AbstractRaycaster
 	{
 	public:
@@ -74,15 +115,19 @@ namespace re
 
 	};
 
+	/// A raycaster for debugging and fast rendering the scene
 	class DebugRaycaster : public AbstractRaycaster
 	{
 	public:
 
-		enum class Modes { Normal, Color };
+		enum class Modes : unsigned int { 
+			Normal = 0, 
+			Color = 1
+		};
 
 		Modes Mode = Modes::Normal;
 
-		DebugRaycaster(unsigned int viewWidth, unsigned int viewHeight, real fovY = PI / 6.0f) :
+		DebugRaycaster(unsigned int viewWidth, unsigned int viewHeight, real fovY = PI / 4.0f) :
 			AbstractRaycaster(viewWidth, viewHeight, fovY) {}
 	protected:
 		virtual Color Raycast(Scene * m_Scene, const Ray& ray) override;

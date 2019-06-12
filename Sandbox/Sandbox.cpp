@@ -3,6 +3,52 @@
 #include "WavefrontLoader.h"
 
 #include <chrono>
+#include <fstream>
+
+#include <lua.hpp>
+#include <LuaState.h>
+
+#include <tinyxml2.h>
+
+/*
+m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::CheckerBoard(16.0f)), m_Materials["glass_black"], m_Materials["glass_white"])));
+m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::Marble(64, 32)), m_Materials["glass_black"], m_Materials["glass_white"])));
+m_GroundMaterials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Noise>(new re::Worley(64, 32)), m_Materials["glass_black"], m_Materials["glass_white"])));
+
+m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x4444ff, 0xffffff, m_DirectionalLights[0].get())));
+
+	m_SpheresMaterials.push_back(m_Materials["red"]);
+	m_SpheresMaterials.push_back(m_Materials["green"]);
+	m_SpheresMaterials.push_back(m_Materials["blue"]);
+	m_SpheresMaterials.push_back(CreateMarble(m_Materials["dark_red"], m_Materials["red"]));
+	m_SpheresMaterials.push_back(CreateMarble(m_Materials["dark_green"], m_Materials["green"]));
+	m_SpheresMaterials.push_back(CreateMarble(m_Materials["dark_blue"], m_Materials["blue"]));
+	m_SpheresMaterials.push_back(CreateWorley(m_Materials["red"], m_Materials["mirror"]));
+	m_SpheresMaterials.push_back(CreateWorley(m_Materials["green"], m_Materials["mirror"]));
+	m_SpheresMaterials.push_back(CreateWorley(m_Materials["blue"], m_Materials["mirror"]));
+
+*/
+
+static std::string SAVED_SCENES_FILE = "res/scenes.xml";
+
+template<typename T, typename ...Args>
+void CheckSize(T& container, size_t index, const char * fmt, Args... args)
+{
+	if (index >= container.size())
+	{
+		static char buffer[256];
+		sprintf_s(buffer, fmt, args...);
+		throw std::exception(buffer);
+	}
+}
+
+template<typename ...Args>
+std::string TsPrintf(const char * fmt, Args... args)
+{
+	static char buffer[256];
+	sprintf_s(buffer, fmt, args...);
+	return std::string(buffer);
+}
 
 
 static inline sb::Sandbox* GetSandbox(GLFWwindow* window)
@@ -18,13 +64,19 @@ static void GLFW_WindowSizeCallback(GLFWwindow* window, int width, int height)
 
 static void GLFW_KeyCallback(GLFWwindow* window, int keycode, int scancode, int action, int mods)
 {
-	auto sandbox = GetSandbox(window);
-	switch (action)
+
+	auto& io = ImGui::GetIO();
+	
+ 	if (!io.WantCaptureKeyboard)
 	{
-	case GLFW_PRESS:
-	case GLFW_REPEAT:
-		sandbox->KeyPressed(keycode, action == GLFW_REPEAT);
-		break;
+		auto sandbox = GetSandbox(window);
+		switch (action)
+		{
+		case GLFW_PRESS:
+		case GLFW_REPEAT:
+			sandbox->KeyPressed(keycode, action == GLFW_REPEAT);
+			break;
+		}
 	}
 }
 
@@ -72,6 +124,8 @@ int sb::Sandbox::Start(unsigned int width, unsigned int height)
 		return -1;
 
 	/* Create a windowed mode window and its OpenGL context */
+
+
 	m_Window = glfwCreateWindow(m_Width, m_Height, "Raytracing Sandbox", NULL, NULL);
 	if (!m_Window)
 	{
@@ -81,6 +135,7 @@ int sb::Sandbox::Start(unsigned int width, unsigned int height)
 
 	/* Make the window's context current */
 	glfwMakeContextCurrent(m_Window);
+
 
 	/* Init GLAD */
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -92,10 +147,11 @@ int sb::Sandbox::Start(unsigned int width, unsigned int height)
 	glfwSetCursorPosCallback(m_Window, &GLFW_CursorPosCallback);
 	glfwSetMouseButtonCallback(m_Window, &GLFW_MouseButtonCallback);
 
+
 	InitGL();
 	InitImGUI();
-	InitMaterials();
-	InitScene();
+	LoadSceneCodes();
+
 
 	m_Raytracer = std::shared_ptr<re::Raytracer>(new re::Raytracer(m_Width, m_Height));
 	m_Raytracer->NumThreads = 8;
@@ -103,6 +159,9 @@ int sb::Sandbox::Start(unsigned int width, unsigned int height)
 	m_Raycaster = std::shared_ptr<re::DebugRaycaster>(new re::DebugRaycaster(m_Width / 8, m_Height / 8));
 	m_Raycaster->Mode = re::DebugRaycaster::Modes::Color;
 	m_Raycaster->NumThreads = 8;
+
+	// Init scene
+	UpdateScene();
 
 	auto currTime = std::chrono::high_resolution_clock::now();
 	auto prevTime = std::chrono::high_resolution_clock::now();
@@ -192,6 +251,53 @@ void sb::Sandbox::InitImGUI()
 	ImGui_ImplOpenGL3_Init("#version 130");
 }
 
+void sb::Sandbox::LoadSceneCodes()
+{
+	using namespace tinyxml2;
+
+	XMLDocument doc;
+	if (doc.LoadFile(SAVED_SCENES_FILE.c_str()) == XML_SUCCESS)
+	{
+
+		auto root = doc.RootElement();
+
+		for (auto sceneEl = root->FirstChildElement("scene"); sceneEl != nullptr; sceneEl = sceneEl->NextSiblingElement("scene"))
+		{
+			auto text = sceneEl->GetText();
+			m_SceneCodes[sceneEl->Attribute("name")] = text != nullptr ? text : "";
+		}
+	}
+
+	if (m_SceneCodes.size() > 0)
+	{
+		auto scene = m_SceneCodes.begin();
+
+		m_CurrentSceneName = scene->first;
+		strcpy(m_CurrentSceneCode, scene->second.c_str());
+	}
+}
+
+void sb::Sandbox::SaveSceneCodes()
+{
+	using namespace tinyxml2;
+	
+	XMLPrinter printer;
+
+	printer.OpenElement("scenes");
+	for (auto& s : m_SceneCodes)
+	{
+		printer.OpenElement("scene");
+		printer.PushAttribute("name", s.first.c_str());
+		printer.PushText(s.second.c_str());
+		printer.CloseElement();
+	}
+	printer.CloseElement();
+
+	XMLDocument doc;
+	doc.Parse(printer.CStr());
+	doc.SaveFile(SAVED_SCENES_FILE.c_str());
+}
+
 void sb::Sandbox::InitGL()
 {
 	glClearColor(0, 0, 0, 1);
@@ -232,48 +338,34 @@ void sb::Sandbox::Update(float dt)
 
 		m_Raytracer->Antialiasing = Settings.Antialiasing;
 		m_Raytracer->MaxRecursion = Settings.MaxRecursion;
-
-
-		m_Ground->Material = m_GroundMaterials[Settings.GroundMaterial].get();
-
-		m_Scene->Lights.clear();
-
-		m_Scene->Lights.push_back(m_AmbientLights[Settings.Sky].get());
-		m_Scene->Lights.push_back(m_DirectionalLights[Settings.Sky].get());
-
-		if (Settings.LampsSwitch)
-		{
-			for (auto &l : m_Lamps)
-			{
-				m_Scene->Lights.push_back(l.get());
-			}
-		}
-
-		m_Scene->Background = m_SkyBoxes[Settings.Sky].get();
 	}
 
 	auto right = re::Cross(m_Scene->Camera.Direction, re::Vector3::Up);
+	
+	auto& io = ImGui::GetIO();
+	if (!io.WantTextInput)
+	{
+		if (isKeyDown(GLFW_KEY_W))
+		{
+			m_Scene->Camera.Position = m_Scene->Camera.Position + m_Scene->Camera.Direction * MoveSpeed * dt;
+			m_SceneDirty = true;
+		}
+		else if (isKeyDown(GLFW_KEY_S))
+		{
+			m_Scene->Camera.Position = m_Scene->Camera.Position - m_Scene->Camera.Direction * MoveSpeed * dt;
+			m_SceneDirty = true;
+		}
 
-	if (isKeyDown(GLFW_KEY_W))
-	{
-		m_Scene->Camera.Position = m_Scene->Camera.Position + m_Scene->Camera.Direction * MoveSpeed * dt;
-		m_SceneDirty = true;
-	}
-	else if (isKeyDown(GLFW_KEY_S))
-	{
-		m_Scene->Camera.Position = m_Scene->Camera.Position - m_Scene->Camera.Direction * MoveSpeed * dt;
-		m_SceneDirty = true;
-	}
-
-	if (isKeyDown(GLFW_KEY_D))
-	{
-		m_Scene->Camera.Position = m_Scene->Camera.Position + right * MoveSpeed * dt;
-		m_SceneDirty = true;
-	}
-	else if (isKeyDown(GLFW_KEY_A))
-	{
-		m_Scene->Camera.Position = m_Scene->Camera.Position - right * MoveSpeed * dt;
-		m_SceneDirty = true;
+		if (isKeyDown(GLFW_KEY_D))
+		{
+			m_Scene->Camera.Position = m_Scene->Camera.Position + right * MoveSpeed * dt;
+			m_SceneDirty = true;
+		}
+		else if (isKeyDown(GLFW_KEY_A))
+		{
+			m_Scene->Camera.Position = m_Scene->Camera.Position - right * MoveSpeed * dt;
+			m_SceneDirty = true;
+		}
 	}
 
 	if (m_SceneDirty)
@@ -335,43 +427,136 @@ void sb::Sandbox::Render(float dt)
 		{
 			ImGui::Begin("Raytracing");
 
-			if (ImGui::CollapsingHeader("Instructions", ImGuiTreeNodeFlags_DefaultOpen))
+			if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
 			{
-				ImGui::BulletText("Press WASD to move");
-				ImGui::BulletText("Use the mouse to rotate");
-				ImGui::BulletText("Press \"Render\" button to render the scene");
-				ImGui::BulletText("Press SPACE key to hide/show this window");
-			}
+				if (ImGui::BeginTabItem("Main"))
+				{
+					if (ImGui::CollapsingHeader("Instructions", ImGuiTreeNodeFlags_DefaultOpen))
+					{
+						ImGui::BulletText("Press WASD to move");
+						ImGui::BulletText("Use the mouse to rotate");
+						ImGui::BulletText("Press \"Render\" button to render the scene");
+						ImGui::BulletText("Press SPACE key to hide/show this window");
+					}
 
-			if (ImGui::CollapsingHeader("Info", ImGuiTreeNodeFlags_DefaultOpen))
-			{
-				float cameraPos[3] = { m_Scene->Camera.Position.X, m_Scene->Camera.Position.Y, m_Scene->Camera.Position.Z };
-				float lookDir[3] = { m_Scene->Camera.Direction.X, m_Scene->Camera.Direction.Y, m_Scene->Camera.Direction.Z };
+					if (ImGui::CollapsingHeader("Info", ImGuiTreeNodeFlags_DefaultOpen))
+					{
+						float cameraPos[3] = { m_Scene->Camera.Position.X, m_Scene->Camera.Position.Y, m_Scene->Camera.Position.Z };
+						float lookDir[3] = { m_Scene->Camera.Direction.X, m_Scene->Camera.Direction.Y, m_Scene->Camera.Direction.Z };
 
-				ImGui::InputFloat3("Camera position", cameraPos, 3, ImGuiInputTextFlags_ReadOnly);
-				ImGui::InputFloat3("Look direction", lookDir, 3, ImGuiInputTextFlags_ReadOnly);
-			}
+						ImGui::InputFloat3("Camera position", cameraPos, 3, ImGuiInputTextFlags_ReadOnly);
+						ImGui::InputFloat3("Look direction", lookDir, 3, ImGuiInputTextFlags_ReadOnly);
+					}
 
-			if (ImGui::CollapsingHeader("Options", ImGuiTreeNodeFlags_DefaultOpen))
-			{
-				ImGui::Combo("Antialiasing", (int*)&Settings.Antialiasing, "None\0SSAA");
-				ImGui::SliderInt("Max Recursion", &Settings.MaxRecursion, 0, 3);
-				ImGui::Combo("Ground Material", &Settings.GroundMaterial, "Checkerboard\0Marble\0Worley");
-				ImGui::Combo("Sky", &Settings.Sky, "Day\0Night");
-				ImGui::Checkbox("Lights on", &Settings.LampsSwitch);
-			}
+					if (ImGui::CollapsingHeader("Options", ImGuiTreeNodeFlags_DefaultOpen))
+					{
+						ImGui::Combo("Antialiasing", (int*)&Settings.Antialiasing, "None\0SSAA");
+						ImGui::SliderInt("Max Recursion", &Settings.MaxRecursion, 0, 3);
+						ImGui::Combo("Fast Raycaster Mode", (int*)(&m_Raycaster->Mode), "Normal\0Color");
+					}
 
-			auto status = m_Raytracer->GetStatus();
+					auto status = m_Raytracer->GetStatus();
 
-			if (status.Finished)
-			{
-				if (ImGui::Button("Render", { ImGui::GetContentRegionAvailWidth(), 0 })) {
-					StartRaytracer();
-				};
-			}
-			else
-			{
-				ImGui::ProgressBar(status.Percent);
+					if (status.Finished)
+					{
+						if (ImGui::Button("Render", { ImGui::GetContentRegionAvailWidth(), 0 })) {
+							StartRaytracer();
+						};
+					}
+					else
+					{
+						ImGui::ProgressBar(status.Percent);
+					}
+
+					ImGui::EndTabItem();
+				}
+				if (ImGui::BeginTabItem("Scene Editor"))
+				{
+
+					if (m_SceneCodes.size() > 0)
+					{
+						if (ImGui::BeginCombo("Scene", m_CurrentSceneName.c_str()))
+						{
+							for (auto& s : m_SceneCodes)
+							{
+								auto name = s.first;
+								bool selected = name == m_CurrentSceneName;
+								if (ImGui::Selectable(name.c_str(), selected))
+								{
+									m_CurrentSceneName = name;
+									strcpy(m_CurrentSceneCode, s.second.c_str());
+								}
+							}
+							ImGui::EndCombo();
+						}
+					}
+
+					ImGui::SameLine();
+
+					if (ImGui::Button("Save"))
+					{
+						if (m_CurrentSceneName != "")
+						{
+							m_SceneCodes[m_CurrentSceneName] = m_CurrentSceneCode;
+							SaveSceneCodes();
+						}
+					}
+
+					ImGui::SameLine();
+
+					if (ImGui::Button("Save as..."))
+					{
+						ImGui::OpenPopup("SaveSceneModal");
+					}
+
+					ImGui::SameLine();
+
+					if (ImGui::Button("Delete"))
+					{
+						if(m_CurrentSceneName != "")
+						{
+							m_SceneCodes.erase(m_CurrentSceneName);
+							m_CurrentSceneName = "";
+							SaveSceneCodes();
+						}
+					}
+
+					if (ImGui::BeginPopupModal("SaveSceneModal", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+					{
+						ImGui::InputText("Scene name", m_SaveSceneInputName, sizeof(m_SaveSceneInputName));
+						if (ImGui::Button("Save"))
+						{
+							std::string name(m_SaveSceneInputName);
+							if (name.size() > 0)
+							{
+								m_SceneCodes[name] = m_CurrentSceneCode;
+								SaveSceneCodes();
+								ImGui::CloseCurrentPopup();
+							}
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Close"))
+						{
+							ImGui::CloseCurrentPopup();
+						}
+						ImGui::EndPopup();
+					}
+
+					ImGui::InputTextMultiline("Code", m_CurrentSceneCode, sizeof(m_CurrentSceneCode), { -1, -ImGui::GetFrameHeightWithSpacing() });
+					if (ImGui::Button("Update Scene"))
+					{
+						UpdateScene();
+					}
+
+					if (!m_LuaError.empty())
+					{
+						ImGui::SameLine();
+						ImGui::TextColored({ 1,0,0,1 }, "Error: %s", m_LuaError.c_str());
+					}
+
+					ImGui::EndTabItem();
+				}
+				ImGui::EndTabBar();
 			}
 
 			ImGui::End();
@@ -407,6 +592,7 @@ std::pair<re::real, re::real> sb::Sandbox::GetWindowSize()
 	glfwGetWindowSize(m_Window, &x, &y);
 	return { static_cast<re::real>(x), static_cast<re::real>(y) };
 }
+/*
 
 void sb::Sandbox::InitMaterials()
 {
@@ -436,16 +622,18 @@ void sb::Sandbox::InitMaterials()
 	m_SpheresMaterials.push_back(CreateWorley(m_Materials["green"], m_Materials["mirror"]));
 	m_SpheresMaterials.push_back(CreateWorley(m_Materials["blue"], m_Materials["mirror"]));
 }
+	*/
 
+/*
 void sb::Sandbox::InitScene()
 {
 	m_Scene = std::shared_ptr<re::Scene>(new re::Scene());
 
-	/*
+	
 	m_Scene->CameraPosition = { -2.88, 7.86, -4.26 };
 	m_CameraDir.Alpha = 0.9;
 	m_CameraDir.Beta = -0.8;
-	*/
+	
 
 
 	m_Scene->Camera.Position = { 0, 3, 20 };
@@ -472,7 +660,7 @@ void sb::Sandbox::InitScene()
 
 
 	{
-
+	
 		m_AmbientLights.push_back(std::shared_ptr<re::Light>(makeAmbientLight(0)));
 		m_AmbientLights.push_back(std::shared_ptr<re::Light>(makeAmbientLight(0)));
 
@@ -482,85 +670,189 @@ void sb::Sandbox::InitScene()
 		//m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x009CE5FF, 0x00C3FAFF, m_DirectionalLights[0].get())));
 		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x4444ff, 0xffffff, m_DirectionalLights[0].get())));
 		m_SkyBoxes.push_back(std::shared_ptr<re::Background>(new re::SkyBox(0x000033, 0x444444, m_DirectionalLights[1].get())));
-
-	}
-
-	{
-		int sx = 3;
-		int sz = m_SpheresMaterials.size() / 3;
-
-		for (int x = 0; x < sx; x++)
-		{
-			for (int z = 0; z < sz; z++)
-			{
-				auto sphereNode = m_Scene->GetRoot()->AddChild();
-				sphereNode->GetComponentOfType<re::Transform>()->Position = re::Vector3(x, 0, z) * CSphereDistance;
-				auto sphere = sphereNode->AddComponent<re::Sphere>();
-				sphere->Material = m_SpheresMaterials[z * 3 + x].get();
-			}
-		}
-
-		for (int x = 0; x < sx - 1; x++)
-		{
-			for (int z = 0; z < sz - 1; z++)
-			{
-				auto light = std::shared_ptr<re::Light>(new re::Light());
-				light->Type = re::LightType::Point;
-				light->Position = re::Vector3(x, 0, z) * CSphereDistance + re::Vector3(CSphereDistance / 2, CSphereDistance, CSphereDistance / 2);
-				light->Attenuation = CSphereDistance * 2;
-				light->Color = m_LampColors[(z * (sx - 1) + x) % m_LampColors.size()];
-				m_Lamps.push_back(light);
-			}
-		}
-	}
-
-	{
-		auto groundNode = m_Scene->GetRoot()->AddChild();
-		groundNode->GetComponentOfType<re::Transform>()->Position = { 0, -1, 0 };
-		m_Ground = groundNode->AddComponent<re::Plane>();
-		m_Ground->Normal = { 0, 1, 0 };
-		m_Ground->Material = nullptr;
-	}
-
-	{
-
-		auto wfData = LoadWavefront("res/bunny.obj_");
-
-		auto meshNode = m_Scene->GetRoot()->AddChild();
-		auto mesh = meshNode->AddComponent<re::Mesh>();
-
-		meshNode->GetComponentOfType<re::Transform>()->Position = { CSphereDistance, -1, -2 * CSphereDistance };
-		meshNode->GetComponentOfType<re::Transform>()->Scale = { 5, 5, 5 };
-
-		for (auto f : wfData["bunny"])
-		{
-			auto& t = mesh->AddTriangle();
-			t.Vertices = { f.Vertices[0], f.Vertices[1], f.Vertices[2] };
-			t.Normals = { f.Normals[0], f.Normals[1], f.Normals[2] };
-		}
 		
-		mesh->NormalMode = re::NormalModes::Vertex;
-		mesh->Material = m_Materials["marble"].get();
-		
-	
+
 	}
 
 }
+*/
 
-
-std::shared_ptr<re::Material> sb::Sandbox::CreateMarble(std::shared_ptr<re::Material> dark, std::shared_ptr<re::Material> bright)
+void sb::Sandbox::UpdateScene()
 {
-	return std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Marble>(new re::Marble(2.0f, 4.0f, 4.0f)), dark, bright));
-}
+	lua::State state;
 
-std::shared_ptr<re::Material> sb::Sandbox::CreatePerlin(std::shared_ptr<re::Material> first, std::shared_ptr<re::Material> second)
-{
-	return std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Perlin>(new re::Perlin(1.0f)), first, second));
-}
+	try
+	{
+		// Copy the camera
+		auto camera = m_Scene->Camera;
+		m_Scene = std::make_shared<re::Scene>();
+		m_Scene->Camera = camera;
 
-std::shared_ptr<re::Material> sb::Sandbox::CreateWorley(std::shared_ptr<re::Material> base, std::shared_ptr<re::Material> feats)
-{
-	return std::shared_ptr<re::Material>(new re::InterpolatedMaterial(std::shared_ptr<re::Worley>(new re::Worley(2.0f, 10.0f)), base, feats));
-}
+		m_Noises.clear();
+		m_Materials.clear();
 
+		re::Vector3 position, scale = { 1,1,1 };
+		
+
+		// Materials
+		state.set("reUniformMaterial", [&](int color, re::real absorptance) -> int {
+			m_Materials.push_back(std::shared_ptr<re::Material>(new re::UniformMaterial(color, absorptance)));
+			return m_Materials.size() - 1;
+		});
+
+		state.set("reInterpolatedMaterial", [&](int noise, int material0, int material1) -> int {
+
+			CheckSize(m_Materials, material0, "Invalid material: %d", material0);
+			CheckSize(m_Materials, material1, "Invalid material: %d", material1);
+			CheckSize(m_Noises, noise, "Invalid noise: %d", noise);
+
+			auto noisePtr = m_Noises[noise];
+			auto mat0Ptr = m_Materials[material0];
+			auto mat1Ptr = m_Materials[material1];
+
+			m_Materials.push_back(std::shared_ptr<re::Material>(new re::InterpolatedMaterial(noisePtr, mat0Ptr, mat1Ptr)));
+			return m_Materials.size() - 1;
+		});
+
+		// Noises
+
+		state.set("reCheckerBoard", [&](re::real domainSize) -> int {
+			m_Noises.push_back(std::shared_ptr<re::Noise>(new re::CheckerBoard(domainSize)));
+			return m_Noises.size() - 1;
+		});
+			
+		state.set("rePerlin", [&](re::real domainSize) -> int {
+			m_Noises.push_back(std::shared_ptr<re::Noise>(new re::Perlin(domainSize)));
+			return m_Noises.size() - 1;
+		});
+
+		state.set("reWorley", [&](re::real domainSize, int divisions) -> int {
+			m_Noises.push_back(std::shared_ptr<re::Noise>(new re::Worley(domainSize, divisions)));
+			return m_Noises.size() - 1;
+		});
+
+		state.set("reMarble", [&](re::real domainSize, re::real frequency, re::real turbolence) -> int {
+			m_Noises.push_back(std::shared_ptr<re::Noise>(new re::Marble(domainSize, frequency, turbolence)));
+			return m_Noises.size() - 1;
+		});
+
+		// Shapes
+			
+		state.set("rePosition", [&](re::real x, re::real y, re::real z) -> void {
+			position = { x,y,z };
+		});
+
+		state.set("reScale", [&](re::real x, re::real y, re::real z) -> void {
+			scale = { x,y,z };
+		});
+
+		state.set("reSphere", [&](size_t material) -> void {
+
+			CheckSize(m_Materials, material, "Invalid material: %d", material);
+
+			auto sphereNode = m_Scene->GetRoot()->AddChild();
+			sphereNode->GetComponentOfType<re::Transform>()->Position = position;
+			sphereNode->GetComponentOfType<re::Transform>()->Scale = scale;
+			auto sphere = sphereNode->AddComponent<re::Sphere>();
+			sphere->Material = m_Materials[material].get();
+		});
+
+		state.set("rePlane", [&](int material, re::real nx, re::real ny, re::real nz) -> void {
+			
+			CheckSize(m_Materials, material, "Invalid material: %d", material);
+
+			auto planeNode = m_Scene->GetRoot()->AddChild();
+			planeNode->GetComponentOfType<re::Transform>()->Position = position;
+			planeNode->GetComponentOfType<re::Transform>()->Scale = scale;
+			auto plane = planeNode->AddComponent<re::Plane>();
+			plane->Normal = { nx, ny, nz };
+			plane->Material = m_Materials[material].get();
+		});
+
+		state.set("reObjMesh", [&](int material, std::string file, std::string group) -> void {
+
+			CheckSize(m_Materials, material, "Invalid material: %d", material);
+
+			auto wfData = LoadWavefront(file);
+
+			auto meshNode = m_Scene->GetRoot()->AddChild();
+			auto mesh = meshNode->AddComponent<re::Mesh>();
+
+			meshNode->GetComponentOfType<re::Transform>()->Position = position;
+			meshNode->GetComponentOfType<re::Transform>()->Scale = scale;
+
+			if (wfData.find(group) == wfData.end())
+				throw std::exception(TsPrintf("Invalid obj group: %s", group.c_str()).c_str());
+
+			for (auto f : wfData[group])
+			{
+				auto& t = mesh->AddTriangle();
+				t.Vertices = { f.Vertices[0], f.Vertices[1], f.Vertices[2] };
+				t.Normals = { f.Normals[0], f.Normals[1], f.Normals[2] };
+			}
+
+			mesh->NormalMode = re::NormalModes::Vertex;
+			mesh->Material = m_Materials[material].get();
+		});
+
+
+		// Lights
+		state.set("reAmbientLight", [&](int color) -> void {
+			auto light = new re::Light();
+			light->Type = re::LightType::Ambient;
+			light->Color = color;
+			m_Scene->Lights.push_back(light);
+		});
+
+		state.set("reDirectionalLight", [&](int color, re::real nx, re::real ny, re::real nz) -> void* {
+			auto light = new re::Light();
+			light->Type = re::LightType::Directional;
+			light->Color = color;
+			light->Direction = re::Vector3(nx,ny,nz).Normalized();
+			m_Scene->Lights.push_back(light);
+			return light;
+		});
+
+		state.set("rePointLight", [&](int color, re::real attenuation) -> void* {
+			auto light = new re::Light();
+			light->Type = re::LightType::Point;
+			light->Color = color;
+			light->Position = position;
+			light->Attenuation = attenuation;
+			m_Scene->Lights.push_back(light);
+			return light;
+		});
+
+		// Camera control
+		state.set("reCameraPos", [&](re::real x, re::real y, re::real z) -> void {
+			m_Scene->Camera.Position = { x,y,z };
+		});
+
+		state.set("reCameraLookAt", [&](re::real dx, re::real dy, re::real dz) -> void {
+			m_Scene->Camera.Direction = { dx,dy,dz };
+		});
+
+		// Background
+		state.set("reSkyBox", [&](int color0, int color1, void* light) -> void {
+			if (m_Scene->Background)
+			{
+				delete m_Scene->Background;
+			}
+
+			m_Scene->Background = new re::SkyBox(color0, color1, static_cast<re::Light*>(light));
+
+		});
+
+
+		state.doString(m_CurrentSceneCode);
+		m_LuaError = "";
+		m_SceneDirty = true;
+		m_Raytracer->Interrupt();
+	}
+	catch (std::exception err)
+	{
+		m_LuaError = err.what();
+	}
+
+}
 

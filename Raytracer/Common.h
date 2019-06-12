@@ -8,6 +8,7 @@ namespace re
 
 	constexpr real PI = 3.14159265359f;
 
+	/// Maps value between in [sa, sb] to [da, sb]
 	inline real Map(real value, real sa, real sb, real da, real db)
 	{
 		return da + (value - sa) / (sb - sa)*(db - da);
@@ -138,11 +139,11 @@ namespace re
 
 	Vector3 operator+(const Vector3& lhs, const Vector3& rhs);
 	Vector3 operator-(const Vector3& lhs, const Vector3& rhs);
-	Vector3 operator*(const Vector3& lhs, const Vector3& rhs); // Hardmond product
-	Vector3 operator/(const Vector3& lhs, const Vector3& rhs); // Hardmond division
+	Vector3 operator*(const Vector3& lhs, const Vector3& rhs); /// Hardmond product
+	Vector3 operator/(const Vector3& lhs, const Vector3& rhs); /// Hardmond division
 	Vector3 operator*(const Vector3& v, real t);
 	Vector3 operator/(const Vector3& v, real t);
-	real operator^(const Vector3& lhs, const Vector3& rhs); // Scalar product
+	real operator^(const Vector3& lhs, const Vector3& rhs); /// Dot product
 	Vector3 Cross(const Vector3& lhs, const Vector3& rhs);
 
 	Matrix4 operator*(const Matrix4& lhs, const Matrix4& rhs);
@@ -204,10 +205,15 @@ namespace re
 		BoundingBox() : Min(), Max() {}
 		BoundingBox(Vector3 min, Vector3 max) : Min(min), Max(max) {}
 
+		/// Split this bouning box into 2 bounding boxes along the given axis at the given value
 		void Split(Axis axis, real value, BoundingBox& left, BoundingBox& right) const;
 
+
+		/// Returns the sturface of this bounding box
 		real Surface() const;
 
+
+		/// Tests if the given ray intersects this bounding box
 		virtual RayHitResult Intersect(const Ray& ray) const;
 	};
 

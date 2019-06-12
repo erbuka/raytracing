@@ -6,18 +6,20 @@
 #include <array>
 #include <future>
 #include <tuple>
+#include <map>
 #include <re.h>
 
 
 #include <imgui.h>
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 namespace sb
 {
+
 	class Sandbox
 	{
 	public:
@@ -34,22 +36,22 @@ namespace sb
 
 	private:
 
+		void LoadSceneCodes();
+		void SaveSceneCodes();
+
 		void InitGL();
 		void InitImGUI();
-		void InitMaterials();
-		void InitScene();
+
+		void UpdateScene();
 
 		void Update(float dt);
 		void Render(float dt);
 
 		void StartRaytracer();
 
+
 		std::pair<re::real, re::real> GetCursorPos();
 		std::pair<re::real, re::real> GetWindowSize();
-
-		std::shared_ptr<re::Material> sb::Sandbox::CreateMarble(std::shared_ptr<re::Material> dark, std::shared_ptr<re::Material> bright);
-		std::shared_ptr<re::Material> sb::Sandbox::CreatePerlin(std::shared_ptr<re::Material> first, std::shared_ptr<re::Material> second);
-		std::shared_ptr<re::Material> sb::Sandbox::CreateWorley(std::shared_ptr<re::Material> base, std::shared_ptr<re::Material> feats);
 
 
 	private:
@@ -62,40 +64,35 @@ namespace sb
 		struct {
 			re::Raytracer::AAMode Antialiasing = re::Raytracer::AAMode::None;
 			int MaxRecursion = 3;
-			int GroundMaterial = 0;
-			int Sky = 0;
-			bool LampsSwitch = false;
 		} Settings;
 
-		std::future<re::Renderer::RenderStatus> m_RaytracerFuture;
 
-		std::vector<std::shared_ptr<re::Background>> m_SkyBoxes;
-		std::vector<std::shared_ptr<re::Light>> m_AmbientLights;
-		std::vector<std::shared_ptr<re::Light>> m_DirectionalLights;
+		std::future<re::Renderer::RenderStatus> m_RaytracerFuture;
 
 		std::shared_ptr<re::Scene> m_Scene;
 		std::shared_ptr<re::Raytracer> m_Raytracer;
 		std::shared_ptr<re::DebugRaycaster> m_Raycaster;
-		std::map<std::string, std::shared_ptr<re::Material>> m_Materials;
-		std::vector<std::shared_ptr<re::Material>> m_SpheresMaterials;
-		std::vector<std::shared_ptr<re::Material>> m_GroundMaterials;
-		std::vector<std::shared_ptr<re::Light>> m_Lamps;
+		std::vector<std::shared_ptr<re::Material>> m_Materials;
+		std::vector<std::shared_ptr<re::Noise>> m_Noises;
 
-		std::array<re::Color, 4> m_LampColors = { 0x00ff00, 0xff0000, 0x0000ff, 0x00ffff };
+
+		
+		std::string m_CurrentSceneName;
+		char m_CurrentSceneCode[1024 * 10] = "";
+		char m_SaveSceneInputName[128] = "";
+		std::map<std::string, std::string> m_SceneCodes;
+		std::string m_LuaError;
+
+		// std::array<re::Color, 4> m_LampColors = { 0x00ff00, 0xff0000, 0x0000ff, 0x00ffff };
 
 		GLuint m_FastTexture, m_Texture;
-
-		re::Plane * m_Ground;
 
 		std::pair<re::real, re::real> m_PrevDragPos, m_CurrDragPos;
 
 		struct {
-			float Alpha = re::PI / 2;
+			float Alpha = -re::PI / 2;
 			float Beta = 0;
 		} m_CameraDir;
-
-		static constexpr float CMovementSpeed = 10.0f;
-		static constexpr float CSphereDistance = 4.0f;
 
 		static constexpr float MoveSpeed = 8.0f;
 

@@ -14,6 +14,16 @@ workspace "Raytracer"
         defines { "NDEBUG" }
         optimize "On"    
 
+project "Lua"
+    kind "StaticLib"
+    language "C++"
+    location "vendor/lua"
+
+    objdir "bin-int/%{cfg.buildcfg}/%{prj.name}"
+    targetdir "bin/%{cfg.buildcfg}/%{prj.name}"    
+
+
+    files { "vendor/lua/**.c" }    
     
 project "ImGui"
     kind "StaticLib"
@@ -23,8 +33,20 @@ project "ImGui"
     objdir "bin-int/%{cfg.buildcfg}/%{prj.name}"
     targetdir "bin/%{cfg.buildcfg}/%{prj.name}"
     
-    includedirs { "vendor/imgui" }
+    defines { "IMGUI_IMPL_OPENGL_LOADER_GLAD" }
+
+    includedirs { "vendor/imgui", "vendor/glad/include", "vendor/glfw/include" }
     files { "vendor/imgui/**.h", "vendor/imgui/**.cpp" }
+
+project "TinyXML2"
+    kind "StaticLib"
+    language "C++"
+    location "vendor/tinyxml2"
+
+    objdir "bin-int/%{cfg.buildcfg}/%{prj.name}"
+    targetdir "bin/%{cfg.buildcfg}/%{prj.name}"
+    
+    files { "vendor/tinyxml2/**.cpp" }
 
 project "Glad"
     kind "StaticLib"
@@ -60,13 +82,21 @@ project "Sandbox"
     files { "%{prj.name}/**.h", "%{prj.name}/**.cpp" }
 
     libdirs { "vendor/glfw/lib"  }
-    includedirs { "Raytracer", "vendor/imgui", "vendor/glfw/include", "vendor/glad/include" }
+    includedirs { 
+        "Raytracer", 
+        "vendor/imgui", 
+        "vendor/glfw/include", 
+        "vendor/glad/include",
+        "vendor/lua/src",
+        "vendor/luastate/include",
+        "vendor/tinyxml2"
+    }
 
-    links { "Raytracer", "Glad", "glfw3dll", "ImGui", "opengl32" }
+
+    links { "Raytracer", "Glad", "glfw3", "ImGui", "opengl32", "Lua", "TinyXML2" }
 
     defines { "IMGUI_IMPL_OPENGL_LOADER_GLAD" }
 
     postbuildcommands {
-        "{COPY} ../vendor/glfw/lib/glfw3.dll ../bin/%{cfg.buildcfg}/%{prj.name}/",
         "{COPY} res/ ../bin/%{cfg.buildcfg}/%{prj.name}/res"  
     }            
