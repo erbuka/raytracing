@@ -1,0 +1,141 @@
+<scenes>
+    <scene name="Demo 1 - Spheres">red = reUniformMaterial(0xf44336, 0.6)
+green = reUniformMaterial(0x4CAF50, 0.6)
+blue = reUniformMaterial(0x2196F3, 0.6)
+dark_red = reUniformMaterial(0x8d1007, 0.9)
+dark_green = reUniformMaterial(0x265728, 0.9)
+dark_blue = reUniformMaterial(0x074b83, 0.9)
+glass_black = reUniformMaterial(0x000000, 0.8)
+glass_white = reUniformMaterial(0xffffff, 0.4)
+mirror = reUniformMaterial(0xffffff, 0.0)
+solid_black = reUniformMaterial(0x000000, 1)
+
+reCameraPos(0, 3, 4)
+
+-- skybox
+sun = reDirectionalLight(0xffddee, 1, 1, -1)
+reSkyBox(0x4444ff, 0xffffff, sun);
+
+-- spheres
+
+sphere_marble = reMarble(2, 2, 4)
+sphere_worley = reWorley(2, 10)
+
+rePosition(-4, 0, -4) reSphere(red)
+rePosition(0, 0, -4) reSphere(green)
+rePosition(4, 0, -4) reSphere(blue)
+
+rePosition(-4, 0, -8) reSphere(reInterpolatedMaterial(sphere_marble, dark_red, red))
+rePosition(0, 0, -8) reSphere(reInterpolatedMaterial(sphere_marble, dark_green, green))
+rePosition(4, 0, -8) reSphere(reInterpolatedMaterial(sphere_marble, dark_blue, blue))
+
+rePosition(-4, 0, -12) reSphere(reInterpolatedMaterial(sphere_worley, dark_red, red))
+rePosition(0, 0, -12) reSphere(reInterpolatedMaterial(sphere_worley, dark_green, green))
+rePosition(4, 0, -12) reSphere(reInterpolatedMaterial(sphere_worley, dark_blue, blue))
+
+-- ground plane
+
+rePosition(0, -1, 0) rePlane(reInterpolatedMaterial(reCheckerBoard(16), glass_black, glass_white), 0, 1, 0)
+</scene>
+    <scene name="Demo 2 - Spheres (night)">red = reUniformMaterial(0xf44336, 0.6)
+green = reUniformMaterial(0x4CAF50, 0.6)
+blue = reUniformMaterial(0x2196F3, 0.6)
+dark_red = reUniformMaterial(0x8d1007, 0.9)
+dark_green = reUniformMaterial(0x265728, 0.9)
+dark_blue = reUniformMaterial(0x074b83, 0.9)
+glass_black = reUniformMaterial(0x000000, 0.8)
+glass_white = reUniformMaterial(0xffffff, 0.4)
+mirror = reUniformMaterial(0xffffff, 0.0)
+solid_black = reUniformMaterial(0x000000, 1)
+
+reCameraPos(0, 3, 4)
+
+-- skybox
+moon = reDirectionalLight(0x353532, 1, 1, -1)
+reSkyBox(0x000033, 0x444444, moon);
+
+-- spheres
+
+sphere_marble = reMarble(2, 2, 4)
+sphere_worley = reWorley(2, 10)
+
+rePosition(-4, 0, -4) reSphere(red)
+rePosition(0, 0, -4) reSphere(green)
+rePosition(4, 0, -4) reSphere(blue)
+
+rePosition(-4, 0, -8) reSphere(reInterpolatedMaterial(sphere_marble, dark_red, red))
+rePosition(0, 0, -8) reSphere(reInterpolatedMaterial(sphere_marble, dark_green, green))
+rePosition(4, 0, -8) reSphere(reInterpolatedMaterial(sphere_marble, dark_blue, blue))
+
+rePosition(-4, 0, -12) reSphere(reInterpolatedMaterial(sphere_worley, dark_red, red))
+rePosition(0, 0, -12) reSphere(reInterpolatedMaterial(sphere_worley, dark_green, green))
+rePosition(4, 0, -12) reSphere(reInterpolatedMaterial(sphere_worley, dark_blue, blue))
+
+-- ground plane
+
+rePosition(0, -1, 0) rePlane(reInterpolatedMaterial(reCheckerBoard(16), glass_black, glass_white), 0, 1, 0)
+
+</scene>
+    <scene name="Demo 3 - Spheres (night/lights)">red = reUniformMaterial(0xf44336, 0.6)
+green = reUniformMaterial(0x4CAF50, 0.6)
+blue = reUniformMaterial(0x2196F3, 0.6)
+dark_red = reUniformMaterial(0x8d1007, 0.9)
+dark_green = reUniformMaterial(0x265728, 0.9)
+dark_blue = reUniformMaterial(0x074b83, 0.9)
+glass_black = reUniformMaterial(0x000000, 0.8)
+glass_white = reUniformMaterial(0xffffff, 0.4)
+mirror = reUniformMaterial(0xffffff, 0.0)
+solid_black = reUniformMaterial(0x000000, 1)
+
+reCameraPos(0, 3, 4)
+
+-- skybox
+moon = reDirectionalLight(0x353532, 1, 1, -1)
+reSkyBox(0x000033, 0x444444, moon);
+
+-- spheres
+
+sphere_marble = reMarble(2, 2, 4)
+sphere_worley = reWorley(2, 10)
+
+rePosition(-4, 0, -4) reSphere(red)
+rePosition(0, 0, -4) reSphere(green)
+rePosition(4, 0, -4) reSphere(blue)
+
+rePosition(-4, 0, -8) reSphere(reInterpolatedMaterial(sphere_marble, dark_red, red))
+rePosition(0, 0, -8) reSphere(reInterpolatedMaterial(sphere_marble, dark_green, green))
+rePosition(4, 0, -8) reSphere(reInterpolatedMaterial(sphere_marble, dark_blue, blue))
+
+rePosition(-4, 0, -12) reSphere(reInterpolatedMaterial(sphere_worley, dark_red, red))
+rePosition(0, 0, -12) reSphere(reInterpolatedMaterial(sphere_worley, dark_green, green))
+rePosition(4, 0, -12) reSphere(reInterpolatedMaterial(sphere_worley, dark_blue, blue))
+
+-- ground plane
+
+rePosition(0, -1, 0) rePlane(reInterpolatedMaterial(reCheckerBoard(16), glass_black, glass_white), 0, 1, 0)
+
+
+-- lights
+rePosition(-2, 3, -6) rePointLight(0xff0000, 10)
+rePosition(2, 3, -6) rePointLight(0x00ff00, 10)
+rePosition(-2, 3, -10) rePointLight(0x0000ff, 10)
+rePosition(2, 3, -10) rePointLight(0x00ffff, 10)
+</scene>
+    <scene name="Demo 4 - Bunny">reCameraPos(0,0,5)
+rePosition(0,-1,0)
+
+-- ground plane
+black = reUniformMaterial(0, 0.7)
+white = reUniformMaterial(0xffffff, 0.7)
+
+plane_mat = reInterpolatedMaterial(reCheckerBoard(1), black, white)
+rePlane(plane_mat, 0, 1, 0)
+
+-- bunny
+bunny_mat = reUniformMaterial(0xff2222, 0.5)
+reObjMesh(bunny_mat, "res/bunny.obj_", "bunny")
+
+-- sky
+sun = reDirectionalLight(0xffcccc, 1, 1, 1)
+reSkyBox(0xff0000, 0x0000ff, sun)</scene>
+</scenes>
