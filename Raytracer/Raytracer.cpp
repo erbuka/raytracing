@@ -202,7 +202,7 @@ re::Color re::Raytracer::RecursiveRaytrace(Scene * scene, const Ray & ray, int r
 
 		Vector3 worldPoint = raycastResult.Point;
 		Vector3 localPoint = raycastResult.LocalPoint;
-		Shape * shape = raycastResult.Node->GetComponentOfType<Shape>();
+		auto shape = raycastResult.Node->GetComponentOfType<Shape>();
 		Vector3 normal = raycastResult.Normal;
 		Material * material = shape->Material;
 		// Handle direct lighting

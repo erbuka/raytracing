@@ -102,7 +102,7 @@ namespace re {
 	};
 }
 
-re::SkyBox::SkyBox(Color color0, Color color1, std::shared_ptr<Light> sun)
+re::SkyBox::SkyBox(Color color0, Color color1, const std::shared_ptr<Light>& sun)
 	: m_SkyColor0(color0), m_SkyColor1(color1), m_Sun(sun)
 {
 	m_Perlin = std::make_shared<Perlin>(1);
@@ -152,12 +152,7 @@ re::Color re::SkyBox::GetColor(const Vector3 & direction) const
 
 re::Scene::Scene()
 {
-	m_Root = new SceneNode();
-}
-
-re::Scene::~Scene()
-{
-	delete m_Root;
+	m_Root = std::make_shared<SceneNode>();
 }
 
 void re::Scene::Compile()
@@ -167,13 +162,13 @@ void re::Scene::Compile()
 
 re::Scene::RaycastResult re::Scene::CastRay(const Ray & ray)
 {
-	return CastRayRecursive(ray, m_Root);
+	return CastRayRecursive(ray, m_Root.get());
 }
 
 re::Scene::RaycastResult re::Scene::CastRayRecursive(const Ray & ray, SceneNode * currentNode)
 {
-	Transform * transform = currentNode->GetComponentOfType<Transform>();
-	Shape * shape = currentNode->GetComponentOfType<Shape>();
+	auto transform = currentNode->GetComponentOfType<Transform>();
+	auto shape = currentNode->GetComponentOfType<Shape>();
 
 	assert(transform != nullptr);
 
@@ -221,7 +216,7 @@ re::Scene::RaycastResult re::Scene::CastRayRecursive(const Ray & ray, SceneNode 
 
 	for (auto child : currentNode->GetChildren())
 	{
-		RaycastResult childResult = CastRayRecursive(ray, child);
+		RaycastResult childResult = CastRayRecursive(ray, child.get());
 
 		if (childResult.Hit)
 		{
@@ -243,7 +238,7 @@ re::Scene::RaycastResult re::Scene::CastRayRecursive(const Ray & ray, SceneNode 
 
 void re::Transform::Compile()
 {
-	SceneNode * parent = m_Owner->GetParent();
+	SceneNode* parent = m_Owner->GetParent();
 
 	Matrix4 prev = Matrix4::Identity, prevInverse = Matrix4::Identity;
 
@@ -273,23 +268,9 @@ re::SceneNode::SceneNode()
 	AddComponent<re::Transform>();
 }
 
-re::SceneNode::~SceneNode()
+std::shared_ptr<re::SceneNode>  re::SceneNode::AddChild()
 {
-	for (auto component : m_Components)
-	{
-		delete component;
-	}
-
-	for (auto child : m_Children)
-	{
-		delete child;
-	}
-
-}
-
-re::SceneNode * re::SceneNode::AddChild()
-{
-	SceneNode * child = new SceneNode();
+	auto child = std::make_shared<SceneNode>();
 	child->m_Parent = this;
 	m_Children.push_back(child);
 	return child;
@@ -515,6 +496,7 @@ re::RayHitResult re::Mesh::IntersectTriangle(const Ray & ray, const Triangle & t
 
 void re::Mesh::IntersectInternal(const Ray& ray, KDTreeTriangle * node, RayHitResult & result, real & distance) const
 {
+
 	if (node->Bounds.Intersect(ray).Hit)
 	{
 		for (auto & t : node->Triangles)

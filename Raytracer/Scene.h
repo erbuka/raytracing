@@ -43,7 +43,7 @@ namespace re
 	class SkyBox : public Background
 	{
 	public:
-		SkyBox(Color color0, Color color1, std::shared_ptr<Light> sun);
+		SkyBox(Color color0, Color color1, const std::shared_ptr<Light>& sun);
 
 		virtual Color GetColor(const Vector3& direction) const override;
 
@@ -80,11 +80,10 @@ namespace re
 		std::shared_ptr<Background> Background = nullptr;
 
 		Scene();
-		~Scene();
 
 		void Compile();
 
-		SceneNode * GetRoot() { return m_Root; }
+		std::shared_ptr<SceneNode>  GetRoot() { return m_Root; }
 
 		RaycastResult CastRay(const Ray &ray);
 
@@ -92,7 +91,7 @@ namespace re
 
 		RaycastResult CastRayRecursive(const Ray& ray, SceneNode * currentNode);
 
-		SceneNode * m_Root;
+		std::shared_ptr<SceneNode>  m_Root;
 	};
 
 	class Component {
@@ -211,25 +210,24 @@ namespace re
 	{
 	public:
 		SceneNode();
-		~SceneNode();
 
 		virtual bool IsLeaf() const { return m_Children.size() == 0; }
-		virtual std::vector<SceneNode*>& GetChildren() { return m_Children; };
-		SceneNode * AddChild();
-		SceneNode * GetParent() const { return m_Parent; }
+		virtual std::vector<std::shared_ptr<SceneNode>>& GetChildren() { return m_Children; };
+		std::shared_ptr<SceneNode>  AddChild();
+		SceneNode*  GetParent() const { return m_Parent; }
 
-		template<typename T> T* AddComponent()
+		template<typename T> std::shared_ptr<T> AddComponent()
 		{
-			T * c = dynamic_cast<T*>(new T(this));
+			auto c = std::shared_ptr<Component>(new T(this));
 			m_Components.push_back(c);
-			return c;
+			return std::dynamic_pointer_cast<T, Component>(c);
 		}
 
-		template<typename T> T* GetComponentOfType() 
+		template<typename T> std::shared_ptr<T> GetComponentOfType() 
 		{
 			for (auto component : m_Components)
 			{
-				T* ccast = dynamic_cast<T*>(component);
+				std::shared_ptr<T> ccast = std::dynamic_pointer_cast<T, Component>(component);
 				if (ccast != nullptr)
 				{
 					return ccast;
@@ -237,12 +235,12 @@ namespace re
 			}
 			return nullptr;
 		}
-		template<typename T> std::vector<T*> GetComponentsOfType() 
+		template<typename T> std::vector<std::shared_ptr<T>> GetComponentsOfType() 
 		{
-			std::vector<T*> result;
+			std::vector<std::shared_ptr<T>> result;
 			for (auto component : m_Components)
 			{
-				auto ccast = dynamic_cast<T*>(component);
+				auto ccast = std::dynamic_pointer_cast<T, Component>(component);
 				if (ccast != nullptr)
 				{
 					result.push_back(ccast);
@@ -255,8 +253,8 @@ namespace re
 
 	protected:
 		SceneNode * m_Parent = nullptr;
-		std::vector<SceneNode*> m_Children;
-		std::vector<Component*> m_Components;
+		std::vector<std::shared_ptr<SceneNode>> m_Children;
+		std::vector<std::shared_ptr<Component>> m_Components;
 	};
 
 }
