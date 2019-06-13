@@ -370,39 +370,11 @@ re::Shape::Shape(SceneNode * owner) : Component(owner)
 }
 
 re::RayHitResult re::Mesh::Intersect(const Ray & ray)
-{
-	/*
-	RayHitResult result;
-	
-	// Check against the mesh bounding box first
-	if (!m_BoundingBox.Intersect(ray).Hit)
-		return result;
-
-	real distance = std::numeric_limits<real>::max();
-
-	// Find, if extits, the closest triangle that is intersected
-	// by the ray
-	for (auto &t : m_Triangles)
-	{
-		auto r = IntersectTriangle(ray, t);
-		auto d = (r.Point - ray.Origin).SquaredLength();
-		if (r.Hit && d < distance)
-		{
-			result.Hit = true;
-			result.Point = r.Point;
-			result.Normal = r.Normal;
-			distance = d;
-		}
-	}
-
-	return result;
-	*/
-	
+{	
 	RayHitResult result;
 	real distance = std::numeric_limits<real>::max();
 	IntersectInternal(ray, m_KdTree, result, distance);
-	return result;
-	
+	return result;	
 }
 
 re::Triangle& re::Mesh::AddTriangle()

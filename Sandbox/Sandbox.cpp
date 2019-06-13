@@ -733,6 +733,7 @@ void sb::Sandbox::UpdateScene()
 			return m_Lights.size() - 1;
 		});
 
+
 		// Camera control
 		state.set("reCameraPos", [&](re::real x, re::real y, re::real z) -> void {
 			m_Scene->Camera.Position = { x,y,z };
