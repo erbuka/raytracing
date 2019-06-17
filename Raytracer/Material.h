@@ -29,23 +29,8 @@ namespace re
 	private:
 		Color m_AbsorbedColor;
 		real m_Absorptance;
-		bool m_Shiny;
 	};
 
-
-	class ChekerBoardMaterial : public Material 
-	{
-	public:
-		ChekerBoardMaterial(Color color0, Color color1, real size, real absorptance0 = 1.0f, real absorptance1 = 1.0f);
-
-		virtual Color GetAbsorbedColor(const Vector3& point) override;
-		virtual real GetAbsorptance(const Vector3& point) override;
-	
-	private:
-		std::unique_ptr<CheckerBoard> m_CheckedBoard;
-		Color m_Color0, m_Color1;
-		real m_Absorptance0, m_Absorptance1;
-	};
 
 	class InterpolatedMaterial : public Material
 	{

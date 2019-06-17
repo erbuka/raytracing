@@ -59,7 +59,7 @@ namespace re
 		enum class AAMode : int
 		{
 			None = 0,
-			SSAA = 1
+			SSAA = 1 
 		};
 
 		AbstractRaycaster(unsigned int viewWidth, unsigned int viewHeight, real fovY = PI / 4.0f);

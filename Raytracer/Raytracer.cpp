@@ -95,7 +95,7 @@ void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 
 void re::AbstractRaycaster::Interrupt()
 {
-	m_Status.Interruped = true;
+m_Status.Interruped = true;
 }
 
 re::Renderer::RenderStatus re::AbstractRaycaster::GetStatus()
@@ -130,7 +130,7 @@ void re::AbstractRaycaster::DoRaytraceThread(Scene * m_Scene, unsigned int minX,
 	unsigned int x;
 	// The "NextRenderSlice" function gives us the scanline we have to render in this thread. Uses a mutex since
 	// the threads are racing for scanlines
-	while(NextRenderSlice(x))
+	while (NextRenderSlice(x))
 	{
 		for (int y = 0; y < m_ViewHeight; y++)
 		{
