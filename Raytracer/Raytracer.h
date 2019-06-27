@@ -83,16 +83,16 @@ namespace re
 
 	private:
 
-		unsigned int m_CurrentRenderSlice;
+		unsigned int m_CurrentRenderScanline;
 		std::mutex m_RenderMutex;
 		RenderStatus m_Status = { true, true, 0, m_Pixels };
 
 		Ray CreateScreenRay(Scene * m_Scene, real x, real y);
-		void DoRaytraceThread(Scene * m_Scene, unsigned int minX, unsigned int maxX);
+		void DoRaytraceThread(Scene * m_Scene);
 
 		void ColorsToPixels(Color *cb, unsigned int *pixels);
 
-		bool NextRenderSlice(unsigned int& sliceX);
+		bool NextRenderScanline(unsigned int& sliceX);
 
 
 	};

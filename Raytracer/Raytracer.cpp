@@ -39,27 +39,22 @@ void re::AbstractRaycaster::Render(Scene * scene, std::promise<RenderStatus> p)
 	auto threadFunc = [scene, this](std::promise<RenderStatus> p) {
 		
 		// Start by compiling there scene (fast operation)
-
-		std::vector<std::function<void()>> functions;
+		scene->Compile();
 
 		// We subdivide the viewport in vertical scanlines (1 pixel wide)
 		// "NumThreads" threads are created. Eachone will process a scanline
 		// at time and the query for a new scanline. A mutex is used to access
 		// the available scanlines (see function DoRayTracethread)
 
-		scene->Compile();
+		std::vector<std::function<void()>> functions;
+		m_CurrentRenderScanline = 0;
 
-		m_CurrentRenderSlice = 0;
-
-		unsigned int pixelsPerThread = std::ceil((real)m_ViewWidth / NumThreads);
 		for (unsigned int i = 0; i < NumThreads; i++) 
 		{
 			functions.push_back(std::bind(
 				&AbstractRaycaster::DoRaytraceThread,
 				this,
-				scene,
-				(unsigned int)i * pixelsPerThread,
-				(unsigned int)(i + 1) * pixelsPerThread
+				scene
 			));
 		}
 		
@@ -125,12 +120,12 @@ re::Ray re::AbstractRaycaster::CreateScreenRay(Scene * scene, real x, real y)
 	return result;
 }
 
-void re::AbstractRaycaster::DoRaytraceThread(Scene * m_Scene, unsigned int minX, unsigned int maxX)
+void re::AbstractRaycaster::DoRaytraceThread(Scene * m_Scene)
 {
 	unsigned int x;
-	// The "NextRenderSlice" function gives us the scanline we have to render in this thread. Uses a mutex since
+	// The "NextRenderScanline" function gives us the scanline we have to render in this thread. Uses a mutex since
 	// the threads are racing for scanlines
-	while (NextRenderSlice(x))
+	while (NextRenderScanline(x))
 	{
 		for (int y = 0; y < m_ViewHeight; y++)
 		{
@@ -174,17 +169,17 @@ void re::AbstractRaycaster::ColorsToPixels(Color * cb, unsigned int * pixels)
 	}
 }
 
-bool re::AbstractRaycaster::NextRenderSlice(unsigned int& sliceX)
+bool re::AbstractRaycaster::NextRenderScanline(unsigned int& sliceX)
 {
 	std::lock_guard<std::mutex> lock(m_RenderMutex);
 
-	if (m_CurrentRenderSlice == m_ViewWidth)
+	if (m_CurrentRenderScanline == m_ViewWidth)
 	{
 		return false;
 	}
 	else
 	{
-		sliceX = m_CurrentRenderSlice++;
+		sliceX = m_CurrentRenderScanline++;
 		return true;
 	}
 }
