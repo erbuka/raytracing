@@ -63,6 +63,7 @@ project "Raytracer"
     kind "StaticLib"
     language "C++"
     location "Raytracer"
+    cppdialect "C++17"
 
     targetdir "bin/%{cfg.buildcfg}/%{prj.name}"
     objdir "bin-int/%{cfg.buildcfg}/%{prj.name}"

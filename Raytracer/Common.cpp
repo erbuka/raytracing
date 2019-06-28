@@ -429,3 +429,39 @@ re::Vector4::Vector4(const Vector3 & source, real w)
 	Z = source.Z;
 	W = w;
 }
+
+re::Vector4 & re::Vector4::operator+=(const Vector4 & other)
+{
+	X += other.X;
+	Y += other.Y;
+	Z += other.Z;
+	W += other.W;
+	return *this;
+}
+
+re::Vector4 & re::Vector4::operator-=(const Vector4 & other)
+{
+	X -= other.X;
+	Y -= other.Y;
+	Z -= other.Z;
+	W -= other.W;
+	return *this;
+}
+
+re::Vector4 & re::Vector4::operator*=(const Vector4 & other)
+{
+	X *= other.X;
+	Y *= other.Y;
+	Z *= other.Z;
+	W *= other.W;
+	return *this;
+}
+
+re::Vector4 & re::Vector4::operator*=(real t)
+{
+	X *= t;
+	Y *= t;
+	Z *= t;
+	W *= t;
+	return *this;
+}

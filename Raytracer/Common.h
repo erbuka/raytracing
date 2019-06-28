@@ -61,8 +61,8 @@ namespace re
 	{
 		static const Vector2 Zero;
 
-		Vector2() : X(0), Y(0) {}
-		Vector2(real x, real y) : X(x), Y(y) {}
+		constexpr Vector2() : X(0), Y(0) {}
+		constexpr Vector2(real x, real y) : X(x), Y(y) {}
 
 		struct { real X, Y; };
 		struct { real R, G; };
@@ -83,8 +83,8 @@ namespace re
 		struct { real R, G, B; };
 		struct { real U, V, S; };
 
-		Vector3() : X(0), Y(0), Z(0) {}
-		Vector3(real x, real y, real z) : X(x), Y(y), Z(z) {}
+		constexpr Vector3() : X(0), Y(0), Z(0) {}
+		constexpr Vector3(real x, real y, real z) : X(x), Y(y), Z(z) {}
 		Vector3(const Vector4& source);
 		
 		real SquaredLength() const;
@@ -107,12 +107,20 @@ namespace re
 
 	union Vector4
 	{
+		Vector4() : X(0), Y(0), Z(0), W(0) {}
+		Vector4(real x, real y, real z, real w) : X(x), Y(y), Z(z), W(w) {}
+		Vector4(const Vector3& source, real w);
+
 		real Elements[4];
 		struct { real X, Y, Z, W; };
 		struct { real R, G, B, A; };
 		struct { real U, V, S, T; };
 
-		Vector4(const Vector3& source, real w);
+		Vector4& operator+=(const Vector4& other);
+		Vector4& operator-=(const Vector4& other);
+		Vector4& operator*=(const Vector4& other);
+		Vector4& operator*=(real t);
+
 	};
 
 	struct Matrix4
@@ -122,7 +130,6 @@ namespace re
 		static const Matrix4 Identity;
 
 		real Elements[16];
-
 		real& operator[](int index) { return Elements[index]; }
 		real operator[](int index) const { return Elements[index]; }
 
