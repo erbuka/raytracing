@@ -2,7 +2,7 @@
 
 A multithreaded raytracing library built in C++. Example usages available in the "Sandbox" project.
 
-![Screenshot](https://github.com/erbuka/raytracing/blob/master/screenshots.jpg)
+![Screenshot](https://github.com/erbuka/raytracing/blob/master/screenshot.jpg)
 
 ## Building
 
