@@ -40,6 +40,14 @@ namespace re
 		virtual Color GetColor(const Vector3& direction) const = 0;
 	};
 
+	class ColorBackground : public Background {
+	public:
+		ColorBackground(Color color): m_Color(color) {}
+		virtual Color GetColor(const Vector3& direction) const override { return m_Color; }
+	private:
+		Color m_Color;
+	};
+
 	class SkyBox : public Background
 	{
 	public:
