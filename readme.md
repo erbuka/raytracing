@@ -22,7 +22,8 @@ All the examples in the __Sandbox__ project use the predefined noises, which alr
 
 The __Background__ base class can be used to specify the appearance of the background. There are 2 implementations:
 - the __SkyBox__ class, which renders a sky with a light source (sun/moon).
-- the __ColorBackground__ class, which renders a solid color as a background
+- the __ColorBackground__ class, which renders a solid color as a background.
+
 If not background is specified, black is used.
 
 ### Rendering
