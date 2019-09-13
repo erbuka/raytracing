@@ -24,7 +24,7 @@ The __Background__ base class can be used to specify the appearance of the backg
 - the __SkyBox__ class, which renders a sky with a light source (sun/moon).
 - the __ColorBackground__ class, which renders a solid color as a background.
 
-If not background is specified, black is used.
+If no background is specified, black is used.
 
 ### Rendering
 
