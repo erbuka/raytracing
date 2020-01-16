@@ -457,6 +457,7 @@ void sb::Sandbox::Render(float dt)
 
 					if (m_SceneCodes.size() > 0)
 					{
+						
 						if (ImGui::BeginCombo("Scene", m_CurrentSceneName.c_str()))
 						{
 							for (auto& s : m_SceneCodes)
@@ -473,7 +474,6 @@ void sb::Sandbox::Render(float dt)
 						}
 					}
 
-					ImGui::SameLine();
 
 					if (ImGui::Button("Save"))
 					{
